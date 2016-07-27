@@ -1,0 +1,87 @@
+#!/usr/bin/env node
+
+var fs = require('fs'),
+    url = require('url'),
+    path = require('path'),
+    mysql = require('mysql'),
+    csv = require('fast-csv'),
+    normalize = require('./lib/normalize');
+
+var SELF = process.argv[1].split(path.sep).pop();
+
+// requires node >= 4 because of the multi-line string.
+if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
+  console.error("Please upgrade your NodeJS to >= 4.");
+  process.exit(1);
+}
+
+var usage = function() {
+  console.log(`
+Usage: ${SELF} file
+
+Description:
+
+  Query a MySQL database and stream results to stdout in csv format.
+  Normalizes date fields as GMT strings.
+
+Dependencies:
+
+  npm install mysql fast-csv
+
+Enviornment Variables:
+
+  MYSQL_URL
+
+Examples:
+
+  MYSQL_URL=mysql://root@localhost:3306/mydb ./${SELF} query.sql \\
+    > data/families.csv
+`);
+  process.exit(1);
+};
+
+if (!process.env.MYSQL_URL) {
+  console.error('MYSQL_URL not defined.');
+  usage();
+}
+
+var mysqlOpts = url.parse(process.env.MYSQL_URL);
+    
+var connection = mysql.createConnection({
+  host     : mysqlOpts.hostname,
+  user     : mysqlOpts.auth.split(':')[0],
+  password : mysqlOpts.auth.split(':')[1],
+  database : mysqlOpts.path.replace('/','')
+});
+
+var csvStream = csv.createWriteStream({headers: true});
+csvStream.pipe(process.stdout);
+
+fs.readFile(process.argv[2], function(err, data) {;
+  if (err) throw err;
+  //runQuery(data.toString());
+  var query = connection.query(data.toString()),
+      fields;
+  query
+    .on('error', function(err) {
+      throw err;
+    })
+    .on('fields', function(res) {
+      fields = res;
+    })
+    .on('result', function(row) {
+      var data = {};
+      fields.forEach(function(field) {
+        // mysql module casts DATE, DATETIME and TIMESTAMP fields as Dates
+        if (row[field.name] && row[field.name].constructor === Date) {
+          data[field.name] = row[field.name].toGMTString();
+        } else {
+          data[field.name] = row[field.name];
+        }
+      });
+      csvStream.write(data);
+    })
+    .on('end', function() {
+      connection.end();
+    });
+});

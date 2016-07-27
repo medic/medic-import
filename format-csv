@@ -1,0 +1,192 @@
+#!/usr/bin/env node
+
+var fs = require('fs'),
+    path = require('path'),
+    csv = require('fast-csv');
+
+var basePath = process.argv[1].split(path.sep),
+    self = basePath.pop(),
+    configFile = self + '-config.js',
+    configFilePath = [process.cwd(), configFile].join(path.sep);
+
+if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
+  console.error("Please upgrade your NodeJS to >= 4.");
+  process.exit(1);
+}
+
+var usageInfo = `
+Usage: cat file.csv | ./${self} [-hc]
+
+Description:
+
+  Prepare data for import. Configure your column mappings and data
+  normalization then pipe your input (CSV file with column header) on stdin. 
+
+  See docs/${self}.md for more info.
+
+Dependencies:
+
+  npm install fast-csv
+
+Options:
+  
+  -h  Print this help information.
+  -c  Path to config file. Default is ${configFile}.
+`;
+
+
+var usage = function() {
+  console.error(usageInfo);
+  process.exit(1);
+};
+
+if (process.argv.indexOf("-c") !== -1) {
+  configFilePath = [
+    process.cwd(),
+    process.argv.splice(process.argv.indexOf("-c"), 2)[1]
+  ].join(path.sep);
+}
+
+if (!fs.existsSync(configFilePath)) {
+  usage();
+};
+
+var flags = process.argv[2];
+
+// prints usage on -h, -help or --help
+if (flags && flags.match(/(^\-h$|^\-help$|^\-\-help$)/)) {
+  usage();
+}
+
+var loadConfig = require(configFilePath),
+    indexes = {},
+    config;
+
+var processConfig = function() {
+  var supportedOpts = ['optional', 'use', 'format', 'unique'];
+  if (!config.columns) {
+    console.error(config);
+    throw new Error('Missing `columns` property in config.');
+  }
+  Object.keys(config.columns).forEach(function(colKey) {
+    var conf = config.columns[colKey],
+        formatter;
+    if (typeof conf === 'undefined') {
+      throw new Error('Column configuration undefined for key: ' + colKey);
+    }
+    if (typeof conf === 'string' || typeof conf === 'function') {
+      return;
+    }
+    if (conf.constructor === Object) {
+      Object.keys(conf).forEach(function(key) {
+        var val = conf[key];
+        if (supportedOpts.indexOf(key) === -1) {
+          console.error(conf);
+          throw new Error(key + ' is not a supported option');
+        }
+        if (key == 'unique') {
+          if (typeof val !== 'boolean') {
+            console.error(conf);
+            throw new Error('unique must be a boolean');
+          }
+          // initialize index
+          indexes[colKey] = {};
+        }
+        if (key === 'format') {
+          if (val.constructor === Array) {
+            if (typeof val[0] !== 'function') {
+              console.error(conf);
+              throw new Error('first argument to format option must be function.');
+            }
+          } else if (typeof val !== 'function') {
+            console.error(conf);
+            throw new Error('format option must be array or function');
+          }
+        }
+        if (key === 'optional') {
+          if (typeof val !== 'boolean') {
+            console.error(conf);
+            throw new Error('optional must be a boolean');
+          }
+        }
+      });
+    } else {
+      console.error(conf);
+      throw new Error(typeof conf + ' is not supported.');
+    }
+  });
+};
+
+var format = function(conf, val, ctx) {
+  var formatter, args;
+  if (conf.constructor === Array) {
+    formatter = conf[0];
+    args = conf.slice(); // clone
+    args.splice(0,1);
+    return formatter.apply(ctx, [val].concat(args));
+  } else {
+    return conf.call(ctx, val);
+  }
+};
+
+var transform = function(obj) {
+  var newObj = {};
+  Object.keys(config.columns).forEach(function(colKey) {
+    var conf = config.columns[colKey],
+        val;
+    if (typeof conf === 'string') {
+      if (typeof obj[conf] === 'undefined') {
+        console.error(obj);
+        throw new Error(conf + ' is undefined and required.');
+      }
+      newObj[colKey] = obj[conf];
+    } else if (typeof conf === 'function') {
+        newObj[colKey] = format(conf, val, newObj);
+    } else if (conf.constructor === Object) {
+      if (conf.use && !obj[conf.use] && !conf.optional) {
+        console.error(conf);
+        throw new Error(conf.use + ' is undefined and required.');
+      }
+      val = obj[conf.use];
+      if (conf.format) {
+        newObj[colKey] = format(conf.format, val, newObj);
+      } else {
+        newObj[colKey] = val;
+      }
+      if (conf.unique) {
+        if (indexes[colKey][newObj[colKey]]) {
+          console.error(obj);
+          throw new Error(colKey + ' value ' + newObj[colKey] + ' is not unique.');
+        } else {
+          indexes[colKey][newObj[colKey]] = 1;
+        }
+      }
+    }
+  });
+  return newObj;
+};
+
+if (typeof loadConfig === 'function') {
+  loadConfig(function(err, conf) {
+    if (err) {
+      throw new Error(err);
+    }
+    config = conf;
+    processConfig();
+    csv
+     //.fromPath(file, {headers: true})
+     .fromStream(process.stdin, {headers: true})
+     .transform(transform)
+     .pipe(csv.createWriteStream({headers: true}))
+     .pipe(process.stdout)
+  });
+} else {
+  config = loadConfig;
+  processConfig();
+  csv
+   //.fromPath(file, {headers: true})
+   .fromStream(process.stdin, {headers: true})
+   .transform(transform)
+   .pipe(csv.createWriteStream({headers: true}))
+   .pipe(process.stdout)
+}

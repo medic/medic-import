@@ -1,0 +1,23 @@
+```
+
+Usage: export-mysql-query file
+
+Description:
+
+  Query a MySQL database and stream results to stdout in csv format.
+  Normalizes date fields as GMT strings.
+
+Dependencies:
+
+  npm install mysql fast-csv
+
+Enviornment Variables:
+
+  MYSQL_URL
+
+Examples:
+
+  MYSQL_URL=mysql://root@localhost:3306/mydb ./export-mysql-query query.sql \
+    > data/families.csv
+
+```

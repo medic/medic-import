@@ -1,0 +1,330 @@
+#!/usr/bin/env node
+
+var url = require('url'),
+    path = require('path'),
+    http = require('http'),
+    csv = require('fast-csv');
+
+var importer,
+    reqOpts,
+    flags = {},
+    stats = {rows:0, changes:0, errors:0},
+    wait = 500, // wait between requests
+    self = process.argv[1].split(path.sep).pop();
+
+var supportedTypes = {
+  users: {
+    required: ['name', 'username', 'password'],
+    optional: ['phone', 'external_id', 'place.parent'],
+    constraints: {
+      unique: ['username']
+    }
+  },
+  people: {
+    required: ['uuid','name'],
+    optional: ['place'],
+    constraints: {
+      unique: ['uuid']
+    }
+  }
+};
+
+// requires node >= 4 because of the multi-line string.
+if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
+  console.error("Please upgrade your NodeJS to >= 4.");
+  process.exit(1);
+}
+
+var usageInfo = `
+Usage:
+
+  cat file.csv | ./${self} [options] [place uuid]
+
+Description:
+
+  Create data against the /api/v1 API, requires webapp version 2.6.2 or later.
+  Returns errors and is silent on success.
+  
+  This script supports multiple record types and you must specify what type
+  with the -t flag.  Each type has it's own set of contraints and required
+  columns.
+
+  Users require the following column names:
+
+    name,username,password[,phone,external_id,place.parent]
+    
+  People require the following column names:
+
+    name[,uuid,place]
+
+  Columns in brackets at the end are optional.  Parent places (i.e. Districts
+  or Branches) can be included as an argument to the command or specified in
+  the column labeled \`place.parent\`.
+
+  Column names that begin with \`place.\` or \`contact.\` are handled
+  specially.  This allows you to specify custom properties on the contact or
+  place objects that are associated with the user.  For example if you define a
+  column labeled \`place.supervisor\`, then the values in those cells are set
+  on the \`supervisor\` property of the place object during user creation.
+
+Options:
+
+  -t  Record type. Currently supported types: users, people
+  -d  Dry run, only prints request body.
+  -h  This help information
+
+Environment Variables:
+
+  COUCH_URL
+
+Dependencies:
+
+  npm install fast-csv
+
+Examples:
+
+  Users import dry run:
+
+    cat "Group 2 Tula.csv" | \\
+      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
+      ./${self} -t users -d
+
+  Users import dry run with a district/branch identifier:
+
+    cat "Group 2 Tula.csv" | \\
+      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
+      ./${self} -t users -d 8fe84af17cb7ac863a92e884e50440c3
+
+  Users import:
+
+    cat "Group 2 Tula.csv" | \\
+      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
+      ./${self} -t users 8fe84af17cb7ac863a92e884e50440c3
+
+  Use head command to only create first record:
+
+    head -2 "Group 2 Tula.csv" | \\
+      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
+      ./${self} -t users 8fe84af17cb7ac863a92e884e50440c3
+
+  Import people:
+
+    cat "Supervisors.csv" | \\
+      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
+      ./${self} -t people 8fe84af17cb7ac863a92e884e50440c3
+
+`;
+
+var usage = function() {
+  console.info(usageInfo);
+  process.exit(1);
+};
+
+if (process.argv.indexOf("-h") !== -1) {
+  usage();
+}
+
+if (process.argv.indexOf("-d") !== -1) {
+  flags.dryrun = true;
+  process.argv.splice(process.argv.indexOf("-d"), 1);
+}
+
+if (process.argv.indexOf("-t") !== -1) {
+  flags.recordType = process.argv.splice(process.argv.indexOf("-t"), 2)[1];
+  if (!supportedTypes[flags.recordType]) {
+    throw new Error("Record type not supported: " + flags.recordType);
+  }
+} else {
+  usage();
+}
+
+if (process.env.COUCH_URL) {
+  reqOpts = url.parse(process.env.COUCH_URL);
+} else {
+  usage();
+}
+
+if (reqOpts.protocol === 'https:') {
+  console.info('using https module');
+  http = require('https');
+}
+
+var placeUUID = process.argv[2],
+    indexes = {};
+
+var validate = function(obj, cb) {
+  var recordType = supportedTypes[flags.recordType];
+  recordType.required.forEach(function(field) {
+    if (typeof obj[field] === 'undefined') {
+      throw new Error('Missing required field: ' + field);
+    }
+  });
+  if (recordType.constraints && recordType.constraints.unique) {
+    recordType.constraints.unique.forEach(function(col) {
+      if (!indexes[col]) {
+        indexes[col] = {};
+      }
+      if (indexes[col][obj[col]]) {
+        throw new Error('Failed unique constraint: ' + col + ' ' + obj[col]);
+      } else {
+        indexes[col][obj[col]] = 1;
+      }
+    });
+  }
+  cb(null, obj);
+};
+
+var importUser = function(obj) {
+  var user = {
+    username: obj.username,
+    password: obj.password,
+    type: obj.type || 'district-manager',
+    language: obj.lang || 'en',
+    known: typeof obj.known === 'undefined' ? true: Boolean(obj.known),
+    external_id: obj.external_id,
+    contact: {
+      name: obj.name,
+      phone: obj.phone
+    },
+    place: {
+      name: obj.name + ' Area',
+      type: 'health_center',
+      parent: placeUUID
+    }
+  };
+  // support `contact` or `place` properties
+  Object.keys(obj).forEach(function(key) {
+    var prop;
+    if (key.match(/^place\.\w+/)) {
+      prop = key.split('.')[1];
+      if (prop === 'uuid') {
+        user.place._id = obj[key];
+      } else {
+        user.place[prop] = obj[key];
+      }
+    } else if (key.match(/^contact\.\w+/)) {
+      prop = key.split('.')[1];
+      if (prop === 'uuid') {
+        user.contact._id = obj[key];
+      } else {
+        user.contact[prop] = obj[key];
+      }
+    }
+  });
+  setTimeout(function() {
+    reqOpts.method = 'POST';
+    reqOpts.path = '/api/v1/users';
+    reqOpts.headers = {
+      'content-type': 'application/json'
+    };
+    if (flags.dryrun) {
+      console.log(reqOpts.method, reqOpts.path);
+      return console.log(JSON.stringify(user, null, 2));
+    }
+    var req = http.request(reqOpts, function(res) {
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        stats.errors++;
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+          console.error('  ' + chunk);
+        });
+        return console.error(
+          'failed to import user %s status %s %s:',
+          obj.username,
+          res.statusCode,
+          res.statusMessage
+        );
+      }
+      stats.changes++;
+    });
+    req.on('error', function(e) {
+      if (e) throw e;
+    });
+    req.write(JSON.stringify(user));
+    req.end();
+  }, stats.rows * wait);
+};
+
+var importPerson = function(obj) {
+  var person = {
+    _id : obj.uuid,
+    name: obj.name,
+    phone: obj.phone,
+    place: {}
+  };
+  // support `place` properties
+  Object.keys(obj).forEach(function(key) {
+    var prop;
+    if (key.match(/^place\.\w+/)) {
+      prop = key.split('.')[1];
+      if (prop === 'uuid') {
+        person.place._id = obj[key];
+      } else {
+        person.place[prop] = obj[key];
+      }
+    }
+  });
+  if (Object.keys(person.place).length === 0) {
+    person.place = obj.place || placeUUID;
+  }
+  setTimeout(function() {
+    reqOpts.method = 'POST';
+    reqOpts.path = '/api/v1/people';
+    reqOpts.headers = {
+      'content-type': 'application/json'
+    };
+    if (flags.dryrun) {
+      console.log(reqOpts.method, reqOpts.path);
+      return console.log(JSON.stringify(person, null, 2));
+    }
+    var req = http.request(reqOpts, function(res) {
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        stats.errors++;
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+          console.error('  ' + chunk);
+        });
+        return console.error(
+          'failed to import person %s status %s %s:',
+          obj.name,
+          res.statusCode,
+          res.statusMessage
+        );
+      }
+      stats.changes++;
+    });
+    req.on('error', function(e) {
+      if (e) throw e;
+    });
+    req.write(JSON.stringify(person));
+    req.end();
+  }, stats.rows * wait);
+};
+
+if (flags.recordType === 'users') {
+  importer = importUser;
+} else if (flags.recordType === 'people') {
+  importer = importPerson;
+}
+
+var onDataHandler = function(obj) {
+  stats.rows++;
+  importer(obj);
+};
+
+csv
+  .fromStream(process.stdin, {headers:true})
+  .validate(validate)
+  .on("data", onDataHandler)
+  .on("end", function() {
+    console.info(
+      "processing %s rows, will take about %s minutes.",
+      stats.rows,
+      (((stats.rows * wait)/1000) / 60).toFixed(1)
+    )
+  })
+
+process.on("exit", function() {
+ console.info("");
+ console.info(stats);
+});
