@@ -1,10 +1,10 @@
 # format-csv Configuration
 
 If you run `./format-csv` or `node format-csv` and there is no default
-configuration file `format-csv-config.js` it will print the usage message
-above.  The configuration file exports an object with a `columns` property that
-defines how `format-csv` should process and format the input data, for an
-example see the Examples section.
+configuration file `format-csv-config.js` it will print the usage message.  The
+configuration file exports an object with a `columns` property that defines how
+`format-csv` should process and format the input data, for an example see the
+Examples section.
 
 Each key in the `columns` object represents the new column name in the output.
 The following types are supported:
