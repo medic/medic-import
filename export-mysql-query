@@ -4,8 +4,7 @@ var fs = require('fs'),
     url = require('url'),
     path = require('path'),
     mysql = require('mysql'),
-    csv = require('fast-csv'),
-    normalize = require('./lib/normalize');
+    csv = require('fast-csv');
 
 var SELF = process.argv[1].split(path.sep).pop();
 
