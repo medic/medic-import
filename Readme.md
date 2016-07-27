@@ -12,6 +12,11 @@ If by chance you do need to introspect a MySQL database we have a script that
 outputs CSV for use in the formatting step.  See `./export-mysql-query` and
 [docs/export-mysql-query.md](docs/export-mysql-query.md) for more info. 
 
+To run the examples you will need the following dependencies:
+
+```
+npm install fast-csv uuid password-generator
+```
 
 Formatting Data
 ================
