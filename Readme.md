@@ -16,7 +16,8 @@ outputs CSV for use in the formatting step.  See `./export-mysql-query` and
 Formatting Data
 ================
 
-See `./format-csv` and [docs/format-csv.md](docs/format-csv.md) for more info. 
+See `./format-csv` output, [docs/format-csv.md](docs/format-csv.md) and
+[docs/format-csv-config.md](docs/format-csv-config.md) for more info. 
 
 Use this script to normalize your data and preserve or format any fields that
 are important, like external ID, or group ID.

@@ -22,7 +22,7 @@ Description:
   Prepare data for import. Configure your column mappings and data
   normalization then pipe your input (CSV file with column header) on stdin. 
 
-  See docs/${self}.md for more info.
+  See docs/${self}-config.md for more info.
 
 Dependencies:
 
