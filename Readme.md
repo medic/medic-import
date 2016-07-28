@@ -28,7 +28,7 @@ was imported but also allows you to re-run the import in case of failures
 without creating duplicates.  
 
 When creating a new user a place (typically a District UUID) needs to be
-provided using one of two methods otherwise you will recieve an error from the
+provided using one of two methods otherwise you will receive an error from the
 API like `status code 400`.  Specify the place ID as a column in the
 spreadsheet or provide it as an argument to the import script.
 
