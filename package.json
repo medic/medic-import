@@ -1,0 +1,11 @@
+{
+  "name": "medic-import",
+  "homepage": "https://github.com/medic/medic-import",
+  "repository": "https://github.com/medic/medic-import",
+  "license": "MIT",
+  "devDependencies": {
+    "fast-csv": "^2.1.0",
+    "password-generator": "^2.0.2",
+    "uuid": "^2.0.2"
+  }
+}
