@@ -13,6 +13,12 @@ See `examples/` for configuration examples that you can run. There are also
 Makefiles provided so you can change to the directory and run `make` to run the
 formatter.
 
+To run the examples you will need the following dependencies:
+
+```
+npm install fast-csv uuid password-generator
+```
+
 ## String
 
 If the value is a string then that string will be used to match a column in the
