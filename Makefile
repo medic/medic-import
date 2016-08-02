@@ -1,9 +1,6 @@
 
-all: deps docs
+all: docs
 	
-deps:
-	npm install fast-csv uuid password-generator
-
 docs: docs/format-csv.md docs/import.md docs/export-mysql-query.md
 
 docs/format-csv.md: format-csv

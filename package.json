@@ -1,10 +1,17 @@
 {
   "name": "medic-import",
+  "version": "0.1.2",
   "homepage": "https://github.com/medic/medic-import",
   "repository": "https://github.com/medic/medic-import",
   "license": "MIT",
-  "devDependencies": {
+  "bin": {
+    "medic-import": "./import",
+    "medic-format-csv": "./format-csv",
+    "medic-export-mysql-query": "./export-mysql-query"
+  },
+  "dependencies": {
     "fast-csv": "^2.1.0",
+    "mysql": "^2.11.1",
     "password-generator": "^2.0.2",
     "uuid": "^2.0.2"
   }
