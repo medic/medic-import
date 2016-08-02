@@ -1,9 +1,11 @@
 {
   "name": "medic-import",
-  "version": "0.1.2",
+  "version": "0.1.4",
+  "description": "A set of NodeJS tools to help you import your data into Medic Mobile.",
   "homepage": "https://github.com/medic/medic-import",
   "repository": "https://github.com/medic/medic-import",
   "license": "MIT",
+  "main": "./main.js",
   "bin": {
     "medic-import": "./import",
     "medic-format-csv": "./format-csv",
