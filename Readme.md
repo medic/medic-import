@@ -1,95 +1,64 @@
-Overview
-========
+# Overview
 
-The import process is divided into two major parts: formating data and importing data.
+Medic Import is a set of NodeJS tools to help you import your data into Medic
+Mobile.  Importing is a two step process, first format and prepare your raw
+data then import it.
 
-Typically the raw data to import is provided by the partner organization in a
-common spreadsheet format like CSV.  It's also likely to be imported in parts
-or groups, it's best to request a portion of the import data to test with
-beforehand.
+The following command line tools are installed with this package:
 
-If by chance you do need to introspect a MySQL database we have a script that
-outputs CSV for use in the formatting step.  See `./export-mysql-query` and
-[docs/export-mysql-query.md](docs/export-mysql-query.md) for more info. 
+ - [medic-export-mysql-query](docs/medic-export-mysql-query.md)
+ - [medic-format-csv](docs/medic-format-csv.md)
+ - [medic-import](docs/medic-import.md)
 
-Formatting Data
-================
+# Getting Started
 
-See `./format-csv` output, [docs/format-csv.md](docs/format-csv.md) and
-[docs/format-csv-config.md](docs/format-csv-config.md) for more info. 
+A new import project typically begins with a spreadsheet of raw data that you
+want to import.  This might be an export from a database or maintained some
+other way.
 
-Use this script to normalize your data and preserve or format any fields that
-are important, like external ID, or group ID.
+Create a directory for your project:
 
-Formatting also helps in defining UUIDs for every document you plan to create.
-Pregenerating identifers for every document you create in the database is
-necessary because it not only allows you to track and check the data after it
-was imported but also allows you to re-run the import in case of failures
-without creating duplicates.  
+```
+mkdir medic-projects-493
+```
 
-When creating a new user a place (typically a District UUID) needs to be
-provided using one of two methods otherwise you will receive an error from the
-API like `status code 400`.  Specify the place ID as a column in the
-spreadsheet or provide it as an argument to the import script.
+Create your package.json:
 
-After formatting user data you might end up with columns below.  In this case
-the username column is used as the identifier:
+```
+{
+  "name": "medic-projects-493",
+  "dependencies": {
+    "medic-import": "latest"
+  }
+}
+```
 
-    name,phone,username,password,district,external_id
+Install the dependencies:
 
-Before import the data should also be consistent.  Name should be ordered
-either last name first or first name last, whichever one it should be
-consistent in the source data, the format script doesn't handle that.  This is
-meaninful because usernames are typically generated using the last name and
-first letter of the first name.
+```
+npm install
+```
 
-Do quick scan to make sure the data looks right then proceed to the next step.
+# Project Templates
 
-Importing Data
-===============
+Medic Import is bundled with a set of project templates for common import
+tasks.  This is a good starting point for your projects.  You can just copy and
+modify these files in your working directory to get started.  Each project
+template also includes a Makefile so after installing you can execute `make` to
+run the example.
 
-See `./import -h` and [docs/import.md](docs/import.md) for more info. 
-
-Once the import process if finished you can share the data files with people for
-acceptance testing.  Since the files contain usernames and passwords you should
-post them in Slack, not Github.
+  - [Import users](project-templates/import-users)
+  - [Import users with related data](project-templates/import-users-w-supervisors)
 
 
-Testing
-=======
+Example:
 
-New Users
-----------
+```
+cp node_modules/medic-import/project-templates/import-users/* .
+make
+```
 
-  1. Navigate to myproject.app.medicmobile.org and login with a new user
-  2. Open Chrome developer tools so that you can see Network tab and the console
-  3. When the Targets tab appears, click Menu then About to get to the About page.
-  4. Wait until you see the Initial Sync Failed
-  5. Click Menu and then History to go to the History tab.
-  6. Wait a while (10-15 mins) until you see the + (plus) sign illuminate.
-     This should correspond with a console message that says `Replicate from
-     hitting pause after X.XXX seconds`
+# Related Data
 
-Once we have a better solution for initial replication, we can reduce that
-10-15 mins to something smaller.
-
-Notes
-=====
-
-Performance
-------------
-
-We found that importing lots of data can slow down syncing and loading of
-phones, so until we have solutions follow a few rules of thumb:
-
-  - Create users then bump the rev of a form. This should happen as soon as
-    possible.
-
-  - Set up the phones as soon as possible. Initial sync from medic to be done
-    on no more than 4 phones at a time. Phones should be syncing old app data
-    at the same time. It may take a day or two to complete the initial sync.
-
-  - Once the initial sync is complete on all phones, run the data/record
-    migration (significantly more docs than just the user account data) then
-    bump the rev of a form again.
+Related data should always be created first.
 
