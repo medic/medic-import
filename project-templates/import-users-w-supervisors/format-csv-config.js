@@ -1,9 +1,8 @@
-var password = require('password-generator'),
+var normalize = require('medic-import').normalize,
+    password = require('password-generator'),
     csv = require('fast-csv'),
     uuid = require('uuid'),
-    path = require('path);
-
-var normalize = require('../../../lib/normalize'),
+    path = require('path'),
     relatedData,
     config;
 

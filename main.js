@@ -1,2 +1,2 @@
 var normalize = require('./lib/normalize');
-modules.export.normalize = normalize;
+module.exports.normalize = normalize;

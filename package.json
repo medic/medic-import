@@ -1,6 +1,6 @@
 {
   "name": "medic-import",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "A set of NodeJS tools to help you import your data into Medic Mobile.",
   "homepage": "https://github.com/medic/medic-import",
   "repository": "https://github.com/medic/medic-import",
