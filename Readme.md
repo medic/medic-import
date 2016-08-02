@@ -6,9 +6,9 @@ data then import it.
 
 The following command line tools are installed with this package:
 
- - [medic-export-mysql-query](docs/medic-export-mysql-query.md)
- - [medic-format-csv](docs/medic-format-csv.md)
- - [medic-import](docs/medic-import.md)
+ - [medic-export-mysql-query](docs/export-mysql-query.md)
+ - [medic-format-csv](docs/format-csv.md)
+ - [medic-import](docs/import.md)
 
 # Getting Started
 
