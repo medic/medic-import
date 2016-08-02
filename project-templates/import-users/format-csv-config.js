@@ -1,7 +1,6 @@
-var password = require('password-generator'),
+var normalize = require('medic-import').normalize,
+    password = require('password-generator'),
     uuid = require('uuid');
-
-var normalize = require('../../../lib/normalize');
 
 module.exports = {
   columns: {

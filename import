@@ -8,7 +8,7 @@ var url = require('url'),
 var importer,
     reqOpts,
     flags = {},
-    stats = {rows:0, changes:0, errors:0},
+    stats = {rows: 0, requests:0, responses:{}},
     wait = 500, // wait between requests
     self = process.argv[1].split(path.sep).pop();
 
@@ -76,10 +76,6 @@ Options:
 Environment Variables:
 
   COUCH_URL
-
-Dependencies:
-
-  npm install fast-csv
 
 Examples:
 
@@ -152,6 +148,16 @@ if (reqOpts.protocol === 'https:') {
 var placeUUID = process.argv[2],
     indexes = {};
 
+var recordStat = function(obj) {
+  var resCode = obj.statusCode;
+  if (resCode) {
+    if (typeof stats.responses[resCode] === 'undefined') {
+      stats.responses[resCode] = 0;
+    }
+    stats.responses[resCode]++;
+  }
+};
+
 var validate = function(obj, cb) {
   var recordType = supportedTypes[flags.recordType];
   recordType.required.forEach(function(field) {
@@ -221,9 +227,10 @@ var importUser = function(obj) {
       console.log(reqOpts.method, reqOpts.path);
       return console.log(JSON.stringify(user, null, 2));
     }
+    stats.requests++;
     var req = http.request(reqOpts, function(res) {
+      recordStat(res);
       if (res.statusCode != 200 && res.statusCode != 201) {
-        stats.errors++;
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
           console.error('  ' + chunk);
@@ -235,7 +242,6 @@ var importUser = function(obj) {
           res.statusMessage
         );
       }
-      stats.changes++;
     });
     req.on('error', function(e) {
       if (e) throw e;
@@ -277,9 +283,10 @@ var importPerson = function(obj) {
       console.log(reqOpts.method, reqOpts.path);
       return console.log(JSON.stringify(person, null, 2));
     }
+    stats.requests++;
     var req = http.request(reqOpts, function(res) {
+      recordStat(res);
       if (res.statusCode != 200 && res.statusCode != 201) {
-        stats.errors++;
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
           console.error('  ' + chunk);
@@ -291,7 +298,6 @@ var importPerson = function(obj) {
           res.statusMessage
         );
       }
-      stats.changes++;
     });
     req.on('error', function(e) {
       if (e) throw e;
