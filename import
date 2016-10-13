@@ -29,9 +29,20 @@ var supportedTypes = {
   }
 };
 
+var outputError = function() {
+  var RED = '\033[0;31m';
+  var NC = '\033[0m';
+
+  var args = Array.prototype.slice.call(arguments);
+
+  args[0] = RED + arguments[0] + NC;
+
+  console.error.apply(null, args);
+};
+
 // requires node >= 4 because of the multi-line string.
 if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
-  console.error("Please upgrade your NodeJS to >= 4.");
+  outputError("Please upgrade your NodeJS to >= 4.");
   process.exit(1);
 }
 
@@ -233,9 +244,9 @@ var importUser = function(obj) {
       if (res.statusCode != 200 && res.statusCode != 201) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
-          console.error('  ' + chunk);
+          outputError('  ' + chunk);
         });
-        return console.error(
+        return outputError(
           'failed to import user %s status %s %s:',
           obj.username,
           res.statusCode,
@@ -289,9 +300,9 @@ var importPerson = function(obj) {
       if (res.statusCode != 200 && res.statusCode != 201) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
-          console.error('  ' + chunk);
+          outputError('  ' + chunk);
         });
-        return console.error(
+        return outputError(
           'failed to import person %s status %s %s:',
           obj.name,
           res.statusCode,
