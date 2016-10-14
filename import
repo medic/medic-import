@@ -341,11 +341,17 @@ csv
     );
   });
 
+var responsesContainErrors = function(responses) {
+  return Object.keys(responses).some(function(key) {
+    return !key.startsWith('2');
+  });
+};
+
 process.on('exit', function() {
   console.info('');
   console.info(stats);
 
-  if (stats.responses && (!stats.responses['200'] || Object.keys(stats.responses).length > 1)) {
+  if (stats.responses && responsesContainErrors(stats.responses)) {
     outputError('IMPORTANT: Some errors occured during this import, please read the output above!');
   }
 });
