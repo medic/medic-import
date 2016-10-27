@@ -1,0 +1,99 @@
+Todos
+------
+The funcationality in `import-pregnancies` should be folded into/refactored
+into the main medic-import script.
+
+Automatic retry algo
+
+Synchronous requests (as option?), so they are run in a queue or in batches.
+
+Create generic csv parser that you can pass a js module to, similar to
+`get-users-query`.
+
+```genUsers.js
+var output = { keys: [] };
+module.exports = {
+  onRow: function(obj) {
+    output.keys.push('org.couchdb.user:' + obj.username);
+  },
+  onEnd: function() {
+    console.log(JSON.stringify(output));
+  }
+};
+```
+cat "New Users.csv" | parse-csv ./genUsers.js > user-query-data.js
+
+
+Steps for importing LG-like pregnancy data
+------------------------------------------
+
+This assumes users are imported, see `medic-import` repo for more info on how
+to import users.
+
+Setup
+
+  alias ts='date -u +"%Y-%m-%dT%H:%M:%SZ"'
+  alias curljz="curl --compressed -H 'content-type:application/json'"
+  export COUCH_URL=https://admin:secret@lg.app.medicmobile.org
+
+Take account of db stats (for kicks):
+
+  curl -s $COUCH_URL/medic > medic-stats-`ts`.json
+  curl -s $COUCH_URL/medic-audit > medic-audit-stats-`ts`.json
+
+Generate Usernames Query:
+
+  cat "New Users.csv" | ./gen-users-query > users
+
+  OR
+
+  # get value for 4th column and prepare all_docs post body
+  cat "New Users.csv" | \
+    jq --raw-input --raw-output --slurp \
+      '{"keys": split("\n") | .[1:] |map(split(",")) | map("org.couchdb.user:" + .[4])}' \
+        > users
+
+Query medic db for user settings docs:
+
+  curljz -d@users $COUCH_URL/medic/_all_docs?include_docs=true > users.json
+  
+Generate Contacts Query:
+
+  cat users.json | jq  '{"keys": [.rows[] | .doc.contact_id]}' > contacts
+
+Query medic db for contacts:
+
+  curljz -d@contacts $COUCH_URL/medic/_all_docs?include_docs=true > contacts.json
+
+Format Pregnancy export:
+
+  cat "Pregancy Data Branch1 Grp2.csv" | \
+    ./node_modules/.bin/medic-format-csv -c format-csv-config-lg-pregnancies.js \
+    > "Pregancy Data Branch1 Grp2-final.csv"
+
+Dry Run
+--------
+
+  ./import-pregnancies -d \
+    ./users.json ./contacts.json "./Pregancy Data Branch1 Grp2-final.csv" > dry-run-`ts`.txt
+
+If dry run runs without errors then import script references are in tact.
+
+Test Run
+----------
+
+Copy random rows to Nsangi_Group1_Import_Test.csv run test import on production:
+
+  ./import-pregnancies  \
+    ./newUsers.json ./contacts.json "./Pregancy Data Branch1 Grp2-final-test.csv"
+
+Final Run
+----------
+
+  ./import-pregnancies  \
+    ./newUsers.json ./contacts.json "./Pregancy Data Branch1 Grp2-final.csv"
+
+Record the output of the test and final runs and re-run if you get errors that
+aren't the test records returning 409.
+
+Finally take account of db stats again.
