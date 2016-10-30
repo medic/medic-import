@@ -6,6 +6,7 @@
   "repository": "https://github.com/medic/medic-import",
   "license": "MIT",
   "main": "./main.js",
+  "engines": { "node": ">=4.0.0" },
   "bin": {
     "medic-import": "./import",
     "medic-format-csv": "./format-csv",
