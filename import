@@ -7,7 +7,10 @@ var url = require('url'),
 
 var importer,
     reqOpts,
-    flags = {},
+    flags = {
+      dryrun: false,
+      ignoreColumns: []
+    },
     stats = {rows: 0, requests:0, responses:{}},
     wait = 500, // wait between requests
     self = process.argv[1].split(path.sep).pop();
@@ -15,17 +18,44 @@ var importer,
 var supportedTypes = {
   users: {
     required: ['name', 'username', 'password'],
-    optional: ['phone', 'external_id', 'place.parent'],
     constraints: {
       unique: ['username']
     }
   },
   people: {
     required: ['uuid','name'],
-    optional: ['place'],
     constraints: {
       unique: ['uuid']
-    }
+    },
+    doc_type: 'person'
+  },
+  'places-level-0': {
+    required: ['uuid','name'],
+    constraints: {
+      unique: ['uuid']
+    },
+    doc_type: 'national_office'
+  },
+  'places-level-1': {
+    required: ['uuid','name'],
+    constraints: {
+      unique: ['uuid']
+    },
+    doc_type: 'district_hospital'
+  },
+  'places-level-2': {
+    required: ['uuid','name'],
+    constraints: {
+      unique: ['uuid']
+    },
+    doc_type: 'health_center'
+  },
+  'places-level-3': {
+    required: ['uuid','name'],
+    constraints: {
+      unique: ['uuid']
+    },
+    doc_type: 'clinic'
   }
 };
 
@@ -53,72 +83,68 @@ Usage:
 
 Description:
 
-  Create data against the /api/v1 API, requires webapp version 2.6.2 or later.
+  Create data using the /api/v1 API, requires webapp version 2.6.2 or later.
   Returns errors and is silent on success.
 
   This script supports multiple record types and you must specify what type
-  with the -t flag.  Each type has it's own set of contraints and required
-  columns.
-
-  Users require the following column names:
-
-    name,username,password[,phone,external_id,place.parent]
-
-  People require the following column names:
-
-    name[,uuid,place]
-
-  Columns in brackets at the end are optional.  Parent places (i.e. Districts
-  or Branches) can be included as an argument to the command or specified in
-  the column labeled \`place.parent\`.
+  with the -t flag.  Each type has its own contraints and required columns.
+  The column names are mapped directly to property names on the JSON POST body.
+  To understand more about the special meanings of property names see the
+  medic-api documentation.
 
   Column names that begin with \`place.\` or \`contact.\` are handled
   specially.  This allows you to specify custom properties on the contact or
-  place objects that are associated with the user.  For example if you define a
+  place objects that are associated with the data.  For example if you define a
   column labeled \`place.supervisor\`, then the values in those cells are set
   on the \`supervisor\` property of the place object during user creation.
 
 Options:
 
-  -t  Record type. Currently supported types: users, people
+  -t  Record type. Currently supported types: users, people, places-level-n
   -d  Dry run, only prints request body.
+  -i  Comma separated list of column names to ignore.
   -h  This help information
 
 Environment Variables:
 
   COUCH_URL
+  
+    Specifies the URL of the project.
+
+    Example:
+
+      export COUCH_URL=https://admin:secret@project.app.medicmobile.org
 
 Examples:
 
   Users import dry run:
 
-    cat 'Group 2 Tula.csv' | \\
-      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
-      ./${self} -t users -d
+    cat 'Group 2 Tula.csv' | ./${self} -t users -d
 
-  Users import dry run with a district/branch identifier:
+  Users import dry run with a place (district/branch) identifier:
 
     cat 'Group 2 Tula.csv' | \\
-      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
       ./${self} -t users -d 8fe84af17cb7ac863a92e884e50440c3
 
   Users import:
 
     cat 'Group 2 Tula.csv' | \\
-      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
       ./${self} -t users 8fe84af17cb7ac863a92e884e50440c3
 
   Use head command to only create first record:
 
     head -2 'Group 2 Tula.csv' | \\
-      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
       ./${self} -t users 8fe84af17cb7ac863a92e884e50440c3
 
   Import people:
 
     cat 'Supervisors.csv' | \\
-      COUCH_URL=https://admin:secret@myproject.app.medicmobile.org \\
       ./${self} -t people 8fe84af17cb7ac863a92e884e50440c3
+
+  Import people and ignore the concession and gender columns:
+
+    cat 'Supervisors.csv' | \\
+      ./${self} -t people -i concession,gender 8fe84af17cb7ac863a92e884e50440c3
 
 `;
 
@@ -143,6 +169,12 @@ if (process.argv.indexOf('-t') !== -1) {
   }
 } else {
   usage();
+}
+
+if (process.argv.indexOf('-i') !== -1) {
+  flags.ignoreColumns = process.argv.splice(
+    process.argv.indexOf('-i'), 2
+  )[1].split(',');
 }
 
 if (process.env.COUCH_URL) {
@@ -170,14 +202,14 @@ var recordStat = function(obj) {
 };
 
 var validate = function(obj, cb) {
-  var recordType = supportedTypes[flags.recordType];
-  recordType.required.forEach(function(field) {
+  var config = supportedTypes[flags.recordType];
+  config.required.forEach(function(field) {
     if (typeof obj[field] === 'undefined') {
       throw new Error('Missing required field: ' + field);
     }
   });
-  if (recordType.constraints && recordType.constraints.unique) {
-    recordType.constraints.unique.forEach(function(col) {
+  if (config.constraints && config.constraints.unique) {
+    config.constraints.unique.forEach(function(col) {
       if (!indexes[col]) {
         indexes[col] = {};
       }
@@ -263,13 +295,16 @@ var importUser = function(obj) {
 };
 
 var importPerson = function(obj) {
-  var person = {
-    _id : obj.uuid,
-    name: obj.name,
-    phone: obj.phone,
-    place: {}
-  };
-  // support `place` properties
+  var config = supportedTypes[flags.recordType],
+      person = {};
+  Object.keys(obj).forEach(function(k) {
+    if (k === 'uuid') {
+      person._id = obj[k];
+    } else if (flags.ignoreColumns.indexOf(k) === -1) {
+      person[k] = obj[k];
+    }
+  });
+  // support values on `place.foo` columns
   Object.keys(obj).forEach(function(key) {
     var prop;
     if (key.match(/^place\.\w+/)) {
@@ -284,6 +319,7 @@ var importPerson = function(obj) {
   if (Object.keys(person.place).length === 0) {
     person.place = obj.place || placeUUID;
   }
+  person.type = config.doc_type;
   setTimeout(function() {
     reqOpts.method = 'POST';
     reqOpts.path = '/api/v1/people';
@@ -318,10 +354,67 @@ var importPerson = function(obj) {
   }, stats.rows * wait);
 };
 
+var importPlace = function(obj) {
+  var config = supportedTypes[flags.recordType],
+      place = {
+        parent: obj.parent || placeUUID
+      };
+  Object.keys(obj).forEach(function(k) {
+    if (k === 'uuid') {
+      place._id = obj[k];
+    } else if (flags.ignoreColumns.indexOf(k) === -1) {
+      place[k] = obj[k];
+    }
+  });
+  // support `parent` and `contact` properties
+  Object.keys(obj).forEach(function(key) {
+    var prop;
+    if (key.match(/^contact\.\w+/) || key.match(/^parent\.\w+/)) {
+      prop = key.split('.')[1];
+      place[key][prop] = obj[key][prop];
+    }
+  });
+  place.type = config.doc_type;
+  setTimeout(function() {
+    reqOpts.method = 'POST';
+    reqOpts.path = '/api/v1/places';
+    reqOpts.headers = {
+      'content-type': 'application/json'
+    };
+    if (flags.dryrun) {
+      console.log(reqOpts.method, reqOpts.path);
+      return console.log(JSON.stringify(place, null, 2));
+    }
+    stats.requests++;
+    var req = http.request(reqOpts, function(res) {
+      recordStat(res);
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+          outputError('  ' + chunk);
+        });
+        return outputError(
+          'failed to import place %s status %s %s:',
+          obj.name,
+          res.statusCode,
+          res.statusMessage
+        );
+      }
+    });
+    req.on('error', function(e) {
+      if (e) throw e;
+    });
+    req.write(JSON.stringify(place));
+    req.end();
+  }, stats.rows * wait);
+};
+
 if (flags.recordType === 'users') {
   importer = importUser;
 } else if (flags.recordType === 'people') {
   importer = importPerson;
+} else if (flags.recordType.match(/places-level-\d/)) {
+  importer = importPlace;
 }
 
 var onDataHandler = function(obj) {
@@ -350,7 +443,6 @@ var responsesContainErrors = function(responses) {
 process.on('exit', function() {
   console.info('');
   console.info(stats);
-
   if (stats.responses && responsesContainErrors(stats.responses)) {
     outputError('IMPORTANT: Some errors occured during this import, please read the output above!');
   }
