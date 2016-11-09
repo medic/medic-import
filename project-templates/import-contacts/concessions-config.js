@@ -29,6 +29,11 @@ var config = {
     nom: 'Nom',
     name: function() {
       return normalize.name(this.nom) + ' (' + this.external_id + ')';
+    },
+    'contact.uuid': uuid,
+    'contact.name': {
+      use: 'Nom',
+      format: [normalize.name]
     }
   },
   related: {
