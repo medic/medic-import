@@ -84,19 +84,25 @@ if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
 var usageInfo = `
 Usage:
 
-  cat file.csv | ./${self} [options] [type] [place uuid]
+  cat file.csv | ./${self} [options] type 
 
 Description:
 
-  Create data using the /api/v1 API, requires webapp version 2.6.2 or later.
-  Returns errors and is silent on success.
+  Create or update data from a CSV formatted file using the /api/v1 API,
+  requires webapp version 2.6.2 or later.  Returns errors and is silent on
+  success.
 
-  This script supports multiple record types and you must specify what type.
-  Each type has its own contraints and required columns.  The column names are
-  mapped directly to property names on the JSON POST body or can be mapped to
-  different strings with the \`-c\` option.  To understand more about the
-  special meanings of property names see the project-templates or the medic-api
-  documentation.
+  You must specify the document type as a parameter.  Each type has its own
+  contraints and required columns. 
+
+    Currently supported types: 
+
+      ${supportedTypeHelp()}
+
+  The column names in your source data are mapped directly to property names on
+  the JSON POST body or can be mapped to different strings with the \`-c\`
+  option.  To understand more about the special meanings of property names see
+  the project-templates or the medic-api documentation.
 
   Column names that begin with \`place.\` or \`contact.\` are handled
   specially.  This allows you to specify custom properties on the contact or
@@ -106,20 +112,14 @@ Description:
 
 Options:
 
-  type
-
-    Currently supported types: 
-
-      ${supportedTypeHelp()}
-
-  place uuid
-
-    Allows you to set the \`place\` UUID value on the command line rather than in
-    the input data. This can be convenient if all the rows in your data are
-    associated with the same place.
-
   -h  This help information
+
   -d  Dry run, only prints request body.
+
+  -p  Set the \`place\` UUID value on the command line rather than in the input
+      data. This can be convenient if all the rows in your data are associated
+      with the same place.
+
   -c  Comma separated list of columns to import.  Also supports a colon
       separator to map the spreadsheet column name to the obj property
       name.  If not specified attempts to import all columns.
@@ -191,6 +191,10 @@ if (process.argv.indexOf('-d') !== -1) {
   process.argv.splice(process.argv.indexOf('-d'), 1);
 }
 
+if (process.argv.indexOf('-p') !== -1) {
+  options.placeUUID = process.argv.splice(process.argv.indexOf('-p'), 2)[1];
+}
+
 if (process.argv.indexOf('-c') !== -1) {
   options.columns = {};
   process.argv.splice(process.argv.indexOf('-c'), 2)[1].split(',')
@@ -211,7 +215,7 @@ if (reqOpts.protocol === 'https:') {
   http = require('https');
 }
 
-options.recordType = process.argv[3];
+options.recordType = process.argv[2];
 if (options.recordType) {
   if (!supportedTypes[options.recordType]) {
     throw new Error('Record type not supported: ' + options.recordType);
@@ -219,8 +223,6 @@ if (options.recordType) {
 } else {
   usage();
 }
-
-options.placeUUID = process.argv[4];
 
 var recordStat = function(obj) {
   var resCode = obj.statusCode;
@@ -261,15 +263,8 @@ var importUser = function(obj) {
     language: obj.lang || 'en',
     known: typeof obj.known === 'undefined' ? true: Boolean(obj.known),
     external_id: obj.external_id,
-    contact: {
-      name: obj.name,
-      phone: obj.phone
-    },
-    place: {
-      name: obj.name + ' Area',
-      type: 'health_center',
-      parent: options.placeUUID
-    }
+    place: obj.place || options.placeUUID,
+    contact:  obj.contact || { name: obj.name, phone: obj.phone }
   };
   // support `contact` or `place` properties
   Object.keys(obj).forEach(function(key) {
