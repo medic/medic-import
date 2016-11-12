@@ -7,9 +7,10 @@ var url = require('url'),
 
 var importer,
     reqOpts,
-    options = {},
+    options = {
+      wait: 500, // wait between requests
+    },
     stats = {rows: 0, requests:0, responses:{}},
-    wait = 500, // wait between requests
     self = process.argv[1].split(path.sep).pop(),
     indexes = {};
 
@@ -114,6 +115,8 @@ Options:
 
   -h  This help information
 
+  -w  Wait between requests (ms).  Default 500
+
   -d  Dry run, only prints request body.
 
   -p  Set the \`place\` UUID value on the command line rather than in the input
@@ -186,6 +189,10 @@ if (process.argv.indexOf('-h') !== -1) {
   usage();
 }
 
+if (process.argv.indexOf('-w') !== -1) {
+  options.wait = process.argv.splice(process.argv.indexOf('-w'), 2)[1];
+}
+
 if (process.argv.indexOf('-d') !== -1) {
   options.dryrun = true;
   process.argv.splice(process.argv.indexOf('-d'), 1);
@@ -247,6 +254,7 @@ var validate = function(obj) {
         indexes[col] = {};
       }
       if (indexes[col][obj[col]]) {
+        outputError(JSON.stringify(obj));
         throw new Error('Failed unique constraint: ' + col + ' ' + obj[col]);
       } else {
         indexes[col][obj[col]] = 1;
@@ -316,7 +324,7 @@ var importUser = function(obj) {
     });
     req.write(JSON.stringify(user));
     req.end();
-  }, stats.rows * wait);
+  }, stats.rows * options.wait);
 };
 
 var importPerson = function(obj) {
@@ -376,7 +384,7 @@ var importPerson = function(obj) {
     });
     req.write(JSON.stringify(person));
     req.end();
-  }, stats.rows * wait);
+  }, stats.rows * options.wait);
 };
 
 var setProperties = function(doc, obj) {
@@ -436,7 +444,7 @@ var importPlace = function(obj) {
     });
     req.write(JSON.stringify(place));
     req.end();
-  }, stats.rows * wait);
+  }, stats.rows * options.wait);
 };
 
 var updatePlace = function(obj) {
@@ -480,7 +488,7 @@ var updatePlace = function(obj) {
     });
     req.write(JSON.stringify(reqBody));
     req.end();
-  }, stats.rows * wait);
+  }, stats.rows * options.wait);
 };
 
 if (options.recordType === 'users') {
@@ -513,7 +521,7 @@ csv
     console.info(
       'processing %s rows, will take about %s minutes.',
       stats.rows,
-      (((stats.rows * wait)/1000) / 60).toFixed(1)
+      (((stats.rows * options.wait)/1000) / 60).toFixed(1)
     );
   });
 
