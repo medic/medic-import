@@ -7,7 +7,8 @@ var fs = require('fs'),
 var basePath = process.argv[1].split(path.sep),
     self = basePath.pop(),
     configFile = self + '-config.js',
-    configFilePath = [process.cwd(), configFile].join(path.sep);
+    configFilePath = [process.cwd(), configFile].join(path.sep),
+    rows = 1;
 
 if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
   console.error("Please upgrade your NodeJS to >= 4.");
@@ -126,12 +127,14 @@ var format = function(conf, val, ctx) {
 };
 
 var transform = function(obj) {
+  rows++;
   var newObj = {};
   Object.keys(config.columns).forEach(function(colKey) {
     var conf = config.columns[colKey],
         val;
     if (typeof conf === 'string') {
       if (typeof obj[conf] === 'undefined') {
+        console.error('row ' + rows);
         console.error(obj);
         throw new Error(conf + ' is undefined and required.');
       }
@@ -140,6 +143,7 @@ var transform = function(obj) {
         newObj[colKey] = format(conf, val, newObj);
     } else if (conf.constructor === Object) {
       if (conf.use && !obj[conf.use] && !conf.optional) {
+        console.error('row ' + rows);
         console.error(conf);
         throw new Error(conf.use + ' is undefined and required.');
       }
