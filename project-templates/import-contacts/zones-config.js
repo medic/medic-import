@@ -1,4 +1,5 @@
 var uuid = require('uuid'),
+    password = require('password-generator'),
     normalize = require('medic-import').normalize;
 
 module.exports = {
@@ -17,6 +18,13 @@ module.exports = {
     'contact.name': {
       use: 'CHW Name',
       format: [normalize.name]
-    }
+    },
+    username: {
+      format: function() {
+        return normalize.username(normalize.name(this.chw_name));
+      },
+      unique: true
+    },
+    password: password
   }
 };

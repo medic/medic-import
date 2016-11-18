@@ -16,12 +16,13 @@ var config = {
   columns: {
     uuid: uuid,
     external_id: 'Concession',
+    person_external_id: 'ID',
     zone: 'Zone',
     parent: function() {
       var key = this.zone;
-      try {
+      if (typeof relatedData[key] !== 'undefined') {
         return relatedData[key];
-      } catch(e) {
+      } else {
         console.error(this);
         throw new Error('Zone ID not found: ' + key);
       }
@@ -34,7 +35,14 @@ var config = {
     'contact.name': {
       use: 'Nom',
       format: [normalize.name]
-    }
+    },
+    date_of_birth: {
+      use: 'Date de naissance',
+      format: [normalize.date]
+    },
+    age: 'Age',
+    menage: 'Menage',
+    sex: 'Sexe'
   },
   related: {
     load: function(callback) {

@@ -9,18 +9,25 @@ var relatedData,
       onRow: function(obj) {
         // map a lookup key to a uuid
         relatedData[obj.external_id] = obj.uuid;
+        relatedData[obj.person_external_id] = obj['contact.uuid'];
       }
     };
 
 var config = {
   columns: {
-    uuid: uuid,
+    external_id: 'ID',
+    uuid: function() {
+      if (typeof relatedData[this.external_id] !== 'undefined') {
+        return relatedData[this.external_id];
+      }
+      return uuid();
+    },
     concession: 'Concession',
     place: function() {
       var key = this.concession;
-      try {
+      if (typeof relatedData[key] !== 'undefined') {
         return relatedData[key];
-      } catch(e) {
+      } else {
         console.error(this);
         throw new Error('Concession ID not found: ' + key);
       }
@@ -29,8 +36,15 @@ var config = {
       use: 'Nom',
       format: [normalize.name]
     },
-    date_of_birth: 'Date de naissance',
-    external_id: 'ID',
+    phone: {
+      use: 'Phone',
+      optional: true,
+      format: [normalize.phone, '+233'] // Ghana
+    },
+    date_of_birth: {
+      use: 'Date de naissance',
+      format: [normalize.date]
+    },
     menage: 'Menage',
     sex: 'Sexe',
     relation_to_parent: 'Lien de parente'
