@@ -160,6 +160,7 @@ var createFamily = function(row, cb) {
     _id: row.family_uuid,
     type: 'clinic',
     reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
     name: row.family_name,
     geolocation: row.geolocation,
     phone: row.phone,
@@ -198,6 +199,7 @@ var createPerson = function(row, cb) {
     _id: row.person_uuid,
     name: row.name,
     reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
     date_of_birth: row.date_of_birth,
     dob_method: 'approx',
     notes: '',
@@ -245,6 +247,7 @@ var createPregnancy = function(row, cb) {
   var pregnancy = {
     _id: row.pregnancy_uuid,
     reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
     type: 'data_record',
     form: 'pregnancy',
     content_type: 'xml',
