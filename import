@@ -225,7 +225,7 @@ if (reqOpts.protocol === 'https:') {
 options.recordType = process.argv[2];
 if (options.recordType) {
   if (!supportedTypes[options.recordType]) {
-    throw new Error('Record type not supported: ' + options.recordType);
+    throw new Error(`Record type not supported: ${options.recordType}`);
   }
 } else {
   usage();
@@ -245,7 +245,7 @@ var validate = function(obj) {
   var config = supportedTypes[options.recordType];
   config.required.forEach(function(field) {
     if (typeof obj[field] === 'undefined') {
-      throw new Error('Missing required field: ' + field);
+      throw new Error(`Missing required field: ${field}`);
     }
   });
   if (config.constraints && config.constraints.unique) {
@@ -255,7 +255,7 @@ var validate = function(obj) {
       }
       if (indexes[col][obj[col]]) {
         outputError(JSON.stringify(obj));
-        throw new Error('Failed unique constraint: ' + col + ' ' + obj[col]);
+        throw new Error(`Failed unique constraint: ${col} ${obj[col]}`);
       } else {
         indexes[col][obj[col]] = 1;
       }
