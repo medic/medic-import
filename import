@@ -329,7 +329,9 @@ var importUser = function(obj) {
 
 var importPerson = function(obj) {
   var config = supportedTypes[options.recordType],
-      person = {};
+      person = {
+        imported_date: new Date().toISOString()
+      };
   Object.keys(obj).forEach(function(k) {
     if (k === 'uuid') {
       person._id = obj[k];
@@ -390,6 +392,7 @@ var importPerson = function(obj) {
 var importPlace = function(obj) {
   var config = supportedTypes[options.recordType],
       place = {
+        imported_date: new Date().toISOString(),
         parent: obj.parent || options.placeUUID
       };
   Object.keys(obj).forEach(function(key) {
