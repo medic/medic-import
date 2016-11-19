@@ -1,0 +1,11 @@
+
+Dry run import:
+
+  make && make import
+
+Live import:
+
+  make && COUCH_URL=$LG_PROD EXTRA_IMPORT_FLAGS='' make import
+
+Deliver imported data `dist/pregnancies-final.csv` to project manager.
+
