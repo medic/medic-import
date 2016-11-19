@@ -387,9 +387,6 @@ var importPerson = function(obj) {
   }, stats.rows * options.wait);
 };
 
-var setProperties = function(doc, obj) {
-};
-
 var importPlace = function(obj) {
   var config = supportedTypes[options.recordType],
       place = {
