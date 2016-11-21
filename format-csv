@@ -6,8 +6,9 @@ var fs = require('fs'),
 
 var basePath = process.argv[1].split(path.sep),
     self = basePath.pop(),
-    configFile = self + '-config.js',
-    configFilePath = [process.cwd(), configFile].join(path.sep);
+    configFile = `${self}-config.js`,
+    configFilePath = [process.cwd(), configFile].join(path.sep),
+    rows = 1;
 
 if (process.version.match(/^v(\d+\.\d+)/)[1] < 4) {
   console.error("Please upgrade your NodeJS to >= 4.");
@@ -68,7 +69,7 @@ var processConfig = function() {
     var conf = config.columns[colKey],
         formatter;
     if (typeof conf === 'undefined') {
-      throw new Error('Column configuration undefined for key: ' + colKey);
+      throw new Error(`Column configuration undefined for key: ${colKey}`);
     }
     if (typeof conf === 'string' || typeof conf === 'function') {
       return;
@@ -78,7 +79,7 @@ var processConfig = function() {
         var val = conf[key];
         if (supportedOpts.indexOf(key) === -1) {
           console.error(conf);
-          throw new Error(key + ' is not a supported option');
+          throw new Error(`${key} is not a supported option`);
         }
         if (key == 'unique') {
           if (typeof val !== 'boolean') {
@@ -108,7 +109,7 @@ var processConfig = function() {
       });
     } else {
       console.error(conf);
-      throw new Error(typeof conf + ' is not supported.');
+      throw new Error(`${typeof conf} is not supported.`);
     }
   });
 };
@@ -126,22 +127,25 @@ var format = function(conf, val, ctx) {
 };
 
 var transform = function(obj) {
+  rows++;
   var newObj = {};
   Object.keys(config.columns).forEach(function(colKey) {
     var conf = config.columns[colKey],
         val;
     if (typeof conf === 'string') {
       if (typeof obj[conf] === 'undefined') {
+        console.error(`row ${rows}`);
         console.error(obj);
-        throw new Error(conf + ' is undefined and required.');
+        throw new Error(`${conf} is undefined and required.`);
       }
       newObj[colKey] = obj[conf];
     } else if (typeof conf === 'function') {
         newObj[colKey] = format(conf, val, newObj);
     } else if (conf.constructor === Object) {
       if (conf.use && !obj[conf.use] && !conf.optional) {
+        console.error('row ' + rows);
         console.error(conf);
-        throw new Error(conf.use + ' is undefined and required.');
+        throw new Error(`${conf.use} is undefined and required.`);
       }
       val = obj[conf.use];
       if (conf.format) {
@@ -152,7 +156,7 @@ var transform = function(obj) {
       if (conf.unique) {
         if (indexes[colKey][newObj[colKey]]) {
           console.error(obj);
-          throw new Error(colKey + ' value ' + newObj[colKey] + ' is not unique.');
+          throw new Error(`${colKey} value ${newObj[colKey]} is not unique.`);
         } else {
           indexes[colKey][newObj[colKey]] = 1;
         }

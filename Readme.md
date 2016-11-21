@@ -49,7 +49,7 @@ run the example.
 
   - [Import users](project-templates/import-users)
   - [Import users with related data](project-templates/import-users-w-supervisors)
-
+  - [Import contacts (places and people)](project-templates/import-contacts)
 
 Example:
 
