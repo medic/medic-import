@@ -9,10 +9,6 @@ Description:
 
   See docs/format-csv-config.md for more info.
 
-Dependencies:
-
-  npm install fast-csv
-
 Options:
   
   -h  Print this help information.
