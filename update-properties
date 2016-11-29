@@ -13,7 +13,7 @@ var basePath = process.argv[1].split(path.sep),
     tmp;
 
 var usageInfo = `
-Usage: cat data.json | ./${self} [-a] index.json > data-edited.json
+Usage: cat data.json | ./${self} [-ah] index.json > data-edited.json
 
 Description:
 
@@ -23,6 +23,8 @@ Description:
 
 Options:
   
+  -h  This help information.
+
   -a  Update all occurrences of an object on a document, rather than just
       updating the first occurrence.  This can be useful to update embedded
       documents, but be warned because this can cause conflicts if your
@@ -39,6 +41,10 @@ var usage = function() {
 if (process.argv.indexOf('-a') !== -1) {
   options.updateAll = true;
   process.argv.splice(process.argv.indexOf('-a'), 1);
+}
+
+if (process.argv.indexOf('-h') !== -1) {
+  usage();
 }
 
 if (process.argv.length < 3) {

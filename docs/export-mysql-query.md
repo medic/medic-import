@@ -7,10 +7,6 @@ Description:
   Query a MySQL database and stream results to stdout in csv format.
   Normalizes date fields as GMT strings.
 
-Dependencies:
-
-  npm install mysql fast-csv
-
 Enviornment Variables:
 
   MYSQL_URL
