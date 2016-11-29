@@ -1,7 +1,12 @@
 
+DOCS = docs/format-csv.md \
+       docs/import.md \
+       docs/export-mysql-query.md \
+       docs/update-properties.md
+
 all: docs
 	
-docs: docs/format-csv.md docs/import.md docs/export-mysql-query.md docs/update-properties.md
+docs: $(DOCS)
 
 docs/format-csv.md: format-csv
 	(echo '```'; ./format-csv -h; echo '```') > docs/format-csv.md 2>&1
@@ -18,4 +23,4 @@ docs/update-properties.md: update-properties
 	  docs/update-properties.md 2>&1
 
 cleandocs:
-	rm -rf docs/*
+	rm $(DOCS)
