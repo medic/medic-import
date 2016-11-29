@@ -11,7 +11,7 @@
     "medic-import": "./import",
     "medic-format-csv": "./format-csv",
     "medic-export-mysql-query": "./export-mysql-query",
-    "medic-csv-to-json": "./cvs-to-json",
+    "medic-csv-to-json": "./csv-to-json",
     "medic-update-properties": "./update-properties"
   },
   "dependencies": {
