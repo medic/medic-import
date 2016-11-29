@@ -225,3 +225,28 @@ to divide it up.
 jq '{docs: .docs[0:5000]}' docs.json > docs-pt1.json
 jq '{docs: .docs[5000:]}' docs.json > docs-pt2.json
 ```
+
+# Fetch User and Contact Data For Import
+
+You have a CSV file that contains a column of usernames and you want to collect
+all the related user data (person and user-settings docs) to prepare it for
+import with `import-pregnancies`.
+
+Use the `username` column in the CSV file to construct a view query and fetch 
+the user-settings documents:
+
+```
+cat Kunesa\ new-users.csv | \
+  ./node_modules/.bin/medic-csv-to-json | \
+  jq '{keys: [.[] | "org.couchdb.user:" + .username]}' | \
+  curljz -d@- $COUCH_URL/medic/_all_docs?include_docs=true > users.json
+```
+
+Then use that data to fetch the `person` docs:
+
+```
+cat users.json | \
+  jq '{keys: [ .rows[] | .doc.contact_id ]}' | \
+  curljz -d@- $COUCH_URL/medic/_all_docs?include_docs=true > contacts.json
+```
+
