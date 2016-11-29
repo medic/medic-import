@@ -167,7 +167,7 @@ $ cat results.json | jq --arg doc "$doc" '.[] | select(.id == $doc)'
 Here are some typical remedies for bulk edit failures.  The most common reason
 is a conflict (409) or a server error (502) if the bulk update is very large.
 
-If you think the bulk update is very large (over 30M or 5000k docs) you can
+If you think the bulk update is very large (over 30M or 5000 docs) you can
 break your update up into smaller parts.
 
 If see conflicts then that doc was updated prior to applying your edit, you can
@@ -176,28 +176,38 @@ run through the recipe again to fix them.
 
 # Cleaning Up Null Docs
 
-If you query a view based on `keys` and some keys don't match any documents
-then your rows data will include nulls.  If you plan to use that data against
-the `_bulk_docs` API you will need to remove them because null values are not
-allowed.
+If you query a view based on the `keys` parameter and some keys don't match any
+documents then your row data will include nulls.  If you plan to use that data
+against the `_bulk_docs` API you will need to remove the null values, they are
+not valid.
 
 You will see an error when trying to parse your results similar to this:
 
 ```
-jq  '.[] | select(.ok != false)' results.json
+$ jq  '.[] | select(.ok != true)' results.json
 parse error: Invalid numeric literal at line 1, column 7
 ```
 
+If you look at your results you will notice it only contains an error, not
+valid JSON:
+
 ```
-cat results.json 
+$ cat results.json 
 Server error: Cannot read property '_id' of null
 ```
 
-Count null rows from a view query:
+Take a look at your view results and count the null rows:
 
 ```
 $ cat rows.json | jq '[.rows[] | select(.doc == null)] | length'
 17
+```
+
+Count the non-null rows from the view results:
+
+```
+$ cat rows.json | jq '[.rows[] | select(.doc != null)] | length'
+1474
 ```
 
 Remove null rows from view results and prepare for bulk docs update:
