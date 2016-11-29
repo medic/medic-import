@@ -1,0 +1,134 @@
+#!/usr/bin/env node
+
+var path = require('path'),
+    _ = require('underscore');
+
+var basePath = process.argv[1].split(path.sep),
+    self = basePath.pop(),
+    input = '',
+    stats = { docs: 0, updates: 0 },
+    index = {},
+    updates = {},
+    options = {},
+    tmp;
+
+var usageInfo = `
+Usage: cat data.json | ./${self} [-a] index.json > data-edited.json
+
+Description:
+
+  Take a list of JSON documents/objects on standard input and apply changes to it. 
+  The index file is also a list of JSON documents/objects and must include an
+  \`id\` property grouped with other properties.
+
+Options:
+  
+  -a  Update all occurrences of an object on a document, rather than just
+      updating the first occurrence.  This can be useful to update embedded
+      documents, but be warned because this can cause conflicts if your
+      document is self-referential or has a version of itself embedded in
+      itself.
+`;
+
+
+var usage = function() {
+  console.error(usageInfo);
+  process.exit(1);
+};
+
+if (process.argv.indexOf('-a') !== -1) {
+  options.updateAll = true;
+  process.argv.splice(process.argv.indexOf('-a'), 1);
+}
+
+if (process.argv.length < 3) {
+  console.error('\nError: Please provide the file system path to the index.');
+  usage();
+} else {
+  tmp = require(path.resolve(process.argv[2]));
+  tmp.forEach(function(obj) {
+    var id = obj.id;
+    delete(obj.id);
+    index[id] = obj;
+  });
+}
+
+// null is not an object
+var isObject = function (obj) {
+  return Boolean(obj && typeof obj === 'object');
+};
+
+var off_updateProperty = function(data) {
+  Object.keys(data).forEach(function(k) {
+    if (data[k] && typeof data[k] === 'object') {
+      if (index[data[k]._id]) {
+        Object.keys(index[data[k]._id]).forEach(function(idxKey) {
+          if (data[k][idxKey]) {
+            data[k][idxKey] = index[data[k]._id][idxKey];
+            stats.updates++;
+          }
+        });
+      } else {
+        updateProperty(data[k]);
+      }
+    }
+  });
+};
+
+var updateProperties = function(obj, update) {
+  console.warn('updateProperties');
+  Object.keys(obj).forEach(function(k) {
+    if (typeof update[k] !== 'undefined') {
+      obj[k] = update[k];
+      stats.updates++;
+    }
+  });
+};
+
+/*
+ * If the property is an object and not null continue walking, if we see an _id
+ * property check the index for a match and try to update its properties.
+ */
+var walkProperties = function(data) {
+  Object.keys(data).forEach(function(k) {
+    if (k === '_id' && index[data[k]]) {
+      if (updates[data[k]] && !options.updateAll) {
+        // only update self-referential embedded objects when update all flag
+        // is set.
+        return;
+      }
+      data = _.extend(data, index[data[k]]);
+      updates[data[k]] = true;
+      stats.updates++;
+    } else if (data[k] && typeof data[k] === 'object') {
+      walkProperties(data[k]);
+    }
+  });
+};
+
+process.stdin.setEncoding('utf8');
+
+process.stdin.on('data', function (chunk) {
+  input += chunk;
+});
+
+process.stdin.on('end', function () {
+  var data = JSON.parse(input);
+  if (data.docs) {
+    data = data.docs;
+  } else if (data.rows) {
+    data = data.rows;
+  } else if (!Array.isArray(data)) {
+    data = [data];
+  }
+  data.forEach(function(doc) {
+    // skip null values
+    if (!isObject(doc)) {
+      return;
+    }
+    stats.docs++;
+    walkProperties(doc.doc || doc);
+  });
+  process.stdout.write(JSON.stringify({docs: data}));
+  console.error(stats);
+});

@@ -1,6 +1,6 @@
 {
   "name": "medic-import",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A set of NodeJS tools to help you import your data into Medic Mobile.",
   "homepage": "https://github.com/medic/medic-import",
   "repository": "https://github.com/medic/medic-import",
@@ -10,12 +10,15 @@
   "bin": {
     "medic-import": "./import",
     "medic-format-csv": "./format-csv",
-    "medic-export-mysql-query": "./export-mysql-query"
+    "medic-export-mysql-query": "./export-mysql-query",
+    "medic-csv-to-json": "./cvs-to-json",
+    "medic-update-properties": "./update-properties"
   },
   "dependencies": {
     "fast-csv": "^2.1.0",
     "mysql": "^2.11.1",
     "password-generator": "^2.0.2",
-    "uuid": "^2.0.2"
+    "uuid": "^2.0.2",
+    "underscore": "^1.8.3"
   }
 }
