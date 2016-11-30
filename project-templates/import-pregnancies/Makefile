@@ -10,23 +10,19 @@ init:
 	test -d dist || mkdir dist
 	test -d tmp || mkdir tmp
 
-tmp/query-users.json:
+tmp/users.json:
+	# assumes username is in a column labeled "username"
 	cat "New Users.csv" | \
-	  ./gen-users-query > tmp/query-users.json
+	  ./node_modules/.bin/medic-csv-to-json | \
+	  jq '{keys: [.[] | "org.couchdb.user:" + .username]}' | \
+	  ${CURLJZ} -d@- ${COUCH_URL}/medic/_all_docs?include_docs=true > tmp/users.json
 
-tmp/users.json: tmp/query-users.json
-	${CURLJZ} -d@tmp/query-users.json \
-	  ${COUCH_URL}/medic/_all_docs?include_docs=true > tmp/users.json
+tmp/contacts.json: tmp/users.json
+	cat tmp/users.json | \
+	  jq  '{"keys": [.rows[] | .doc.contact_id]}' | \
+	  ${CURLJZ} -d@- ${COUCH_URL}/medic/_all_docs?include_docs=true > tmp/contacts.json
 
-tmp/query-contacts.json: tmp/users.json
-	cat tmp/users.json | jq  '{"keys": [.rows[] | .doc.contact_id]}' \
-	  > tmp/query-contacts.json
-
-tmp/contacts.json: tmp/query-contacts.json
-	${CURLJZ} -d@tmp/query-contacts.json \
-	  ${COUCH_URL}/medic/_all_docs?include_docs=true > tmp/contacts.json
-
-dist/pregnancies-final.csv: tmp/contacts.json tmp/users.json
+dist/pregnancies-final.csv: tmp/contacts.json
 	cat "Pregnancy Data.csv" | \
 	  ./node_modules/.bin/medic-format-csv \
 	  -c format-csv-config-lg-pregnancies.js \

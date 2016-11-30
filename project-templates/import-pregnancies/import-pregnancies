@@ -27,6 +27,7 @@ var usage = function() {
 };
 
 if (!process.env.COUCH_URL || process.argv.length < 4) {
+  console.error("Define COUCH_URL");
   usage();
 }
 
