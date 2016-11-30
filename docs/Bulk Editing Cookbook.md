@@ -248,3 +248,21 @@ cat users.json | \
   curljz -d@- $COUCH_URL/medic/_all_docs?include_docs=true > contacts.json
 ```
 
+# Fetch Branch (Place Level 1) Hierarchy Information 
+
+You want a list of names and IDs of branches from any given instance:
+
+JSON
+
+```
+curl "$COUCH_URL/medic/_design/medic/_view/doc_by_type?key=\[\"district_hospital\"\]&include_docs=true" | \
+  jq '[.rows[] | { name: .doc.name, id: .doc._id}]'
+```
+
+Plain Text
+
+```
+curl "$LG_KENYA/medic/_design/medic/_view/doc_by_type?key=\[\"district_hospital\"\]&include_docs=true" | \
+  jq --raw-output '.rows[] | .doc.name + " "  + .doc._id'
+``
+
