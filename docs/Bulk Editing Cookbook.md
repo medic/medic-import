@@ -11,30 +11,28 @@ alias curljz="curl --compressed -H 'content-type:application/json'"
 
 # Updating a static value
 
-You have a field that needs updating on a many docs and the value is the same
-for all of them.
+You have a field/property that needs updating and the value is the same for all
+of the docs.
 
 You have a CSV file with the list of UUIDs to update.
 
 First prepare a query for the `_all_docs` view based on the CSV data.  The
-column name in the CSV file is "UUID", so we use that in the `jq` filter.
+column name in the CSV file is "UUID", so we use that in the `jq` filter to
+construct the query.  Then fetch all the documents.
 
 ```
-cat "Missing Content field.csv" | ./medic-csv-to-json | \
-  jq '{"keys":[ .[] | .UUID ]}' > query
+cat "Missing Content field.csv" | \
+  ./node_modules/.bin/medic-csv-to-json | \
+  jq '{keys: [ .[] | .UUID ]}' | \
+  curljz -d@- $COUCH_URL/medic/_all_docs?include_docs=true > docs.json
 ```
 
-Fetch all your documents:
-
-```
-curljz -d@query $COUCH_URL/medic/_all_docs?include_docs=true > docs.json
-```
-
-Set the property value on all the docs:
+Set the property value on all the docs and prepare a request body that can be
+used for a bulk update:
 
 ```
 cat docs.json | \
-  jq '{"docs": [ .rows[] | .doc | .content = "foo" ]}' > docs-edited.json
+  jq '{"docs": [ .rows[] | .doc | .content = "xml" ]}' > docs-edited.json
 ```
 
 Take a few samples from the output and compare them.  If you want you can diff
@@ -49,14 +47,14 @@ json-diff old new
 
 ```diff
  {
-+  content: "foo"
++  content: "xml"
  }
 ```
 
 Apply changes to production and save result data:
 
 ```
-curljz -d@docs-edited.json $LG_PROD/medic/_bulk_docs > results.json
+curljz -d@docs-edited.json $COUCH_URL/medic/_bulk_docs > results.json
 ```
 
 Check results for errors, this should return nothing.
