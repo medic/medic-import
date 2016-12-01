@@ -5,7 +5,7 @@
 #   EXTRA_IMPORT_FLAGS='' EXTRA_IMPORT_FILTERS=cat make import
 #
 
-BRANCH ?= 2b2592a0d2
+VILLAGE ?= 2b2592a0d2
 EXTRA_IMPORT_FLAGS ?= -d
 EXTRA_IMPORT_FILTERS ?= head -2
 
@@ -38,7 +38,7 @@ import-zones:
 	cat dist/zones.csv | $(EXTRA_IMPORT_FILTERS) | ./node_modules/.bin/medic-import \
 	  $(EXTRA_IMPORT_FLAGS) \
 	  -c uuid,name,external_id \
-	  -p $(BRANCH) \
+	  -p $(VILLAGE) \
 	  places-level-2
 	# create people associated with zones
 	cat dist/zones.csv | $(EXTRA_IMPORT_FILTERS) | ./node_modules/.bin/medic-import \
@@ -55,7 +55,7 @@ import-users:
 	cat dist/zones.csv | $(EXTRA_IMPORT_FILTERS) | ./node_modules/.bin/medic-import \
 	  $(EXTRA_IMPORT_FLAGS) \
 	  -c username,password,uuid:place,contact.uuid:contact,name,external_id \
-	  -p $(BRANCH) \
+	  -p $(VILLAGE) \
 	  users
 
 import-concessions:

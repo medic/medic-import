@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export COUCH_URL=${COUCH_URL-http://localhost:5984}
-export BRANCH=f8baa9de4e
+export VILLAGE=f8baa9de4e
 export EXTRA_IMPORT_FLAGS='-d -w 0'
 export EXTRA_IMPORT_FILTERS='cat'
 
