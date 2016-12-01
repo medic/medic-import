@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SELF=`basename $0`
+SELF_HOME=`dirname $0`
+USERNAME="$1"
+DIR="$SELF_HOME/$USERNAME-`date +%Y%d%m`/`date +%H%M%S`"
+CURL='curl -sSf --compressed'
+PARENT_PLACE=''
+PLACE=''
+
+_usage () {
+  cat <<EOT
+
+Usage:
+
+  ./$SELF username
+
+Description:
+
+  Collect all contacts and records related to a user and prepare for bulk edit.
+
+Environment variables:
+
+  COUCH_URL: URL to a CouchDB database. e.g. http://localhost:5984/medic.
+
+EOT
+}
+
+_log () {
+  echo `date -u '+%FT%T%Z - log: '` $1
+}
+
+_log_stats () {
+  data="$1"
+  stats=`cat "$data" | "$SELF_HOME/stats" | jq .`
+  _log "stats for $data: $stats"
+}
+
+if [ -z $USERNAME ] || [ -z $COUCH_URL ]; then
+  _usage
+  exit 1
+fi
+
+test -d $DIR || mkdir -p $DIR
+
+_log "collecting data in $DIR"
+
+$CURL $COUCH_URL/org.couchdb.user:$USERNAME \
+  > $DIR/org.couchdb.user:$USERNAME
+
+cat $DIR/org.couchdb.user:$USERNAME | \
+  jq --raw-output '.facility_id, .contact_id' \
+  > $DIR/uuids
+
+PLACE=`cat $DIR/org.couchdb.user:$USERNAME | \
+  jq --raw-output .facility_id`
+
+_log "collecting data related to place $PLACE"
+
+$CURL "$COUCH_URL/$PLACE" > $DIR/$PLACE
+
+PARENT_PLACE=`cat $DIR/$PLACE | jq --raw-output .parent._id`
+
+echo $PARENT_PLACE >> $DIR/uuids
+
+$CURL "$COUCH_URL/$PARENT_PLACE" > $DIR/$PARENT_PLACE
+
+_log "pruning parent place"
+_log_stats "$DIR/$PARENT_PLACE"
+
+cat $DIR/$PARENT_PLACE | jq 'del(.contact.parent.contact.parent)' \
+  > $DIR/$PARENT_PLACE-pruned.json
+
+_log_stats "$DIR/$PARENT_PLACE-pruned.json"
+
+$CURL -G \
+  --data-urlencode 'startkey=["clinic","'$PLACE'"]' \
+  --data-urlencode 'endkey=["clinic","'$PLACE'",{}]' \
+  "$COUCH_URL/_design/medic/_view/facilities_by_parent" | \
+    jq --raw-output '.rows[] | .id' >> $DIR/uuids
+
+$CURL -G \
+  --data-urlencode 'startkey=["'$PLACE'"]' \
+  --data-urlencode 'endkey=["'$PLACE'",{}]' \
+  "$COUCH_URL/_design/medic/_view/reports_by_place" | \
+    jq --raw-output '.rows[] | .id' >> $DIR/uuids
+
+count=`cat $DIR/uuids | wc -l`
+_log "saving $count docs to $DIR/data.json"
+
+cat $DIR/uuids | jq --raw-input --slurp '{"keys":split("\n")}' | \
+  $CURL -H 'content-type:application/json' -d@- \
+    "$COUCH_URL/_all_docs?include_docs=true" | jq -c '{"docs": [.rows[] | .doc]}' \
+      > $DIR/data.json
+
+_log_stats "$DIR/data.json"
+
+_log "pruning data"
+_log "`{ cat $DIR/data.json | "$SELF_HOME/update-embedded" $DIR/$PARENT_PLACE-pruned.json \
+  > $DIR/data-pruned.json; } 2>&1`"
+
+_log_stats "$DIR/data-pruned.json"
