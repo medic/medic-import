@@ -422,6 +422,63 @@ curljz -G \
        
 Then edit `docs.json` and save it using the `_bulk_docs` API.
 
+# Bulk edit data related to a user (via PouchDB)
+
+You are logged in as a non-admin user via the app or a browser window and have
+synchronized all your data with the server.  Now you want a copy of that data
+to bulk edit.
+
+First paste this script
+([credit](http://stackoverflow.com/questions/11849562/how-to-save-the-output-of-a-console-logobject-to-a-file))
+into the browser console.  This modifies your `console` object to easier save
+data via console.
+
+```
+(function(console){
+  console.save = function(data, filename){
+    if(!data) {
+      console.error('Console.save: No data')
+      return;
+    }
+    if(!filename) filename = 'console.json'
+    if(typeof data === "object"){
+      data = JSON.stringify(data, undefined, 4)
+    }
+    var blob = new Blob([data], {type: 'text/json'}),
+        e    = document.createEvent('MouseEvents'),
+        a    = document.createElement('a')
+    a.download = filename
+    a.href = window.URL.createObjectURL(blob)
+    a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
+    e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+    a.dispatchEvent(e)
+  }
+})(console);
+```
+
+Then replace "glenng" here with the username string and paste into the console:
+
+```
+(function(username) {
+  var db = new PouchDB('medic-user-' + username);
+  db.allDocs().then(function(result) {console.save(result)});
+}('glenng')); 
+```
+
+This will prompt your browser to save a file named `console.json`.  This file
+contains all the document UUIDs in the user's PouchDB database.  Use it to
+fetch all the docs from the server and prepare for bulk edit:
+
+```
+cat console.json | \
+  jq '{keys: [.rows[] | .id]}' | \
+  curljz -d@- "$COUCH_URL/medic/_all_docs?include_docs=true" | \
+  jq '{docs: [.rows[] | select(.doc).doc]}' > docs.json
+```
+
+Do your edits, then updating the docs on the server will automatically sync
+with the app or browser window.
+
 # Prune a large contact
 
 You have identified a contact document that is large and needs to be pruned.
