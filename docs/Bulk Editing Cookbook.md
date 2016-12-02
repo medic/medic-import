@@ -302,7 +302,7 @@ Apply changes to production and save result data:
 curljz -d@docs-edited.json $COUCH_URL/medic/_bulk_docs > results.json
 ```
 
-Then [check results for errors](#Checking results after a bulk update).
+Then [check results for errors](#checking-results-after-a-bulk-update).
 
 # Editing documents based on columns in a CSV file
 
@@ -370,7 +370,7 @@ Apply changes to production and save results:
 curljz -d@docs-edited.json $COUCH_URL/medic/_bulk_docs > results.json
 ```
 
-Then [check results for errors](#Checking results after a bulk update).
+Then [check results for errors](#checking-results-after-a-bulk-update).
 
 # Prepare a user's place data for bulk edit
 
@@ -430,8 +430,8 @@ to bulk edit.
 
 First paste this script
 ([credit](http://stackoverflow.com/questions/11849562/how-to-save-the-output-of-a-console-logobject-to-a-file))
-into the browser console.  This modifies your `console` object to easier save
-data via console.
+into the browser console.  This modifies the window's `console` object to save
+data easier.
 
 ```
 (function(console){
@@ -485,7 +485,7 @@ You have identified a contact document that is large and needs to be pruned.
 These documents are self referential so a place has a person and a person has a
 place and sometimes grow too big.
 
-Fetch the document and use jq to prune it:
+Fetch the document, prune it and save it:
 
 ```
 curl $COUCH_URL/medic/967a00dff5e02add41819138abb3284d | \
@@ -493,3 +493,104 @@ curl $COUCH_URL/medic/967a00dff5e02add41819138abb3284d | \
   curlj -d@- $COUCH_URL/medic
 ```
   
+# Update embedded docs 
+
+You want to modify a document that is embedded in many other documents.
+
+First, fetch all your docs and prepare for bulk edit, let's say you have
+a list of UUIDs separated by new lines to start.
+
+```
+cat uuids.txt | \
+  jq --raw-input --slurp '{keys: split("\n")}' | \
+  curljz -d@- "$COUCH_URL/_all_docs?include_docs=true" | \
+  jq '{docs: [.rows[] | select(.doc).doc]}' > docs.json
+```
+
+Then prepare the doc you want to prune, let's say a place or person with doc ID
+d93a3fc1 that is embedded throughout the docs you just fetched above.
+
+First fetch the doc and then edit it, this can be done manually.
+
+```
+curl $COUCH_URL/medic/d93a3fc1 > d93a3fc1.json
+cp d93a3fc1.json d93a3fc1-pruned.json
+[edit d93a3fc1-pruned.json]
+```
+
+Update the doc on the server to fix source of the problem so any new docs that
+happen to need it get the fix:
+
+```
+curljz -d@d93a3fc1-pruned.json $COUCH_URL/medic
+```
+
+Now use the `updated-embedded` script to apply the pruned doc to the bulk edit
+you have prepared.  This will find all instances of doc d93a3fc1 that is
+embedded and replace it:
+
+```
+$ cat docs.json | \
+    ./node_modules/.bin/medic-update-embedded d93a3fc1-pruned.json \
+    > docs-pruned.json
+
+{"docs": 4198, "updates": 12406}
+```
+
+Save the updates:
+
+```
+curljz -d@docs-pruned.json $COUCH_URL/medic/_bulk_docs > results.json
+```
+
+Then [check results for errors](#checking-results-after-a-bulk-update).
+
+# Checking doc stats
+
+To prove that a document is simpler after you have edited it there is a
+`stats` script.
+
+A common task is to see the stats on your docs before and after pruning:
+
+```
+$ cat data.json | ./node_modules/.bin/medic-stats
+{"docs": 2039, "depth":90177, "length":34607692}
+$ cat data-pruned.json | ./node_modules/.bin/medic-stats
+{"docs": 2039, "depth":32998, "length":19398211}
+```
+
+Those are the totals for all of the docs.  You can also spot check a single doc
+assuming the index ordering is the same which is usually the case.
+
+Not pruned:
+
+```
+$ jq '.docs[311]' docs.json | ./node_modules/.bin/medic-stats | jq
+[
+  {
+    "depth": 18,
+    "length": 4950,
+    "type": "data_record",
+    "name": "Juanca Simone",
+    "id": "8aa260df",
+    "rev": "1-8076e138a0"
+  }
+]
+```
+
+Pruned:
+
+```
+$ jq '.docs[311]' docs-pruned.json | \
+    ./node_modules/.bin/medic-stats | jq
+[
+  {
+    "depth": 6,
+    "length": 1981,
+    "type": "data_record",
+    "name": "Juanca Simone",
+    "id": "8aa260df",
+    "rev": "1-8076e138a0"
+  }
+]
+```

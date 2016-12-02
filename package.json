@@ -12,7 +12,10 @@
     "medic-format-csv": "./format-csv",
     "medic-export-mysql-query": "./export-mysql-query",
     "medic-csv-to-json": "./csv-to-json",
-    "medic-update-properties": "./update-properties"
+    "medic-update-properties": "./update-properties",
+    "medic-update-embedded": "./update-embedded",
+    "medic-collect-user-data": "./collect-user-data",
+    "medic-stats": "./stats"
   },
   "dependencies": {
     "fast-csv": "^2.1.0",
