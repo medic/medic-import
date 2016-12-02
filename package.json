@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "fast-csv": "^2.1.0",
-    "mysql": "^2.11.1",
     "password-generator": "^2.0.2",
     "uuid": "^2.0.2",
     "underscore": "^1.8.3"
