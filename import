@@ -217,11 +217,6 @@ if (process.env.COUCH_URL) {
   usage();
 }
 
-if (reqOpts.protocol === 'https:') {
-  console.info('using https module');
-  http = require('https');
-}
-
 options.recordType = process.argv[2];
 if (options.recordType) {
   if (!supportedTypes[options.recordType]) {
@@ -229,6 +224,11 @@ if (options.recordType) {
   }
 } else {
   usage();
+}
+
+if (reqOpts.protocol === 'https:') {
+  console.info('using https module');
+  http = require('https');
 }
 
 var recordStat = function(obj) {
