@@ -5,14 +5,14 @@ help manage large amounts of Medic Mobile data.
 
 The following command line tools are installed with this package:
 
- - [medic-stats](docs/stats)
- - [medic-import](docs/import)
- - [medic-format-csv](docs/format-csv)
- - [medic-csv-to-json](docs/csv-to-json)
- - [medic-update-embedded](docs/update-embedded)
- - [medic-extend-properties](docs/update-properties)
- - [medic-collect-user-data](docs/collect-user-data)
- - [medic-export-mysql-query](docs/export-mysql-query)
+ - [medic-stats](docs/stats.md)
+ - [medic-import](docs/import.md)
+ - [medic-format-csv](docs/format-csv.md)
+ - [medic-csv-to-json](docs/csv-to-json.md)
+ - [medic-update-embedded](docs/update-embedded.md)
+ - [medic-extend-properties](docs/update-properties.md)
+ - [medic-collect-user-data](docs/collect-user-data.md)
+ - [medic-export-mysql-query](docs/export-mysql-query.md)
 
 # Getting Started
 
