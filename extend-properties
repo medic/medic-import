@@ -64,33 +64,6 @@ var isObject = function (obj) {
   return Boolean(obj && typeof obj === 'object');
 };
 
-var off_updateProperty = function(data) {
-  Object.keys(data).forEach(function(k) {
-    if (data[k] && typeof data[k] === 'object') {
-      if (index[data[k]._id]) {
-        Object.keys(index[data[k]._id]).forEach(function(idxKey) {
-          if (data[k][idxKey]) {
-            data[k][idxKey] = index[data[k]._id][idxKey];
-            stats.updates++;
-          }
-        });
-      } else {
-        updateProperty(data[k]);
-      }
-    }
-  });
-};
-
-var updateProperties = function(obj, update) {
-  console.warn('updateProperties');
-  Object.keys(obj).forEach(function(k) {
-    if (typeof update[k] !== 'undefined') {
-      obj[k] = update[k];
-      stats.updates++;
-    }
-  });
-};
-
 /*
  * If the property is an object and not null continue walking, if we see an _id
  * property check the index for a match and try to update its properties.

@@ -2,7 +2,7 @@
 DOCS = docs/format-csv.md \
        docs/import.md \
        docs/export-mysql-query.md \
-       docs/update-properties.md \
+       docs/extend-properties.md \
        docs/collect-user-data.md
 
 all: docs
@@ -19,9 +19,9 @@ docs/export-mysql-query.md: export-mysql-query
 	(echo '```'; ./export-mysql-query; echo '```') > \
 		docs/export-mysql-query.md 2>/dev/null
 
-docs/update-properties.md: update-properties
-	(echo '```'; ./update-properties -h; echo '```') > \
-	  docs/update-properties.md 2>&1
+docs/extend-properties.md: extend-properties
+	(echo '```'; ./extend-properties -h; echo '```') > \
+	  docs/extend-properties.md 2>&1
 
 docs/collect-user-data.md: collect-user-data
 	(echo '```'; ./collect-user-data; echo '```') > \

@@ -1,6 +1,6 @@
 ```
 
-Usage: cat data.json | ./update-properties [-ah] index.json > data-edited.json
+Usage: cat data.json | ./extend-properties [-ah] index.json > data-edited.json
 
 Description:
 

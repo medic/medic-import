@@ -12,7 +12,7 @@
     "medic-format-csv": "./format-csv",
     "medic-export-mysql-query": "./export-mysql-query",
     "medic-csv-to-json": "./csv-to-json",
-    "medic-update-properties": "./update-properties",
+    "medic-extend-properties": "./extend-properties",
     "medic-update-embedded": "./update-embedded",
     "medic-collect-user-data": "./collect-user-data",
     "medic-stats": "./stats"
