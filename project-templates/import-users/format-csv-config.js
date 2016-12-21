@@ -1,4 +1,4 @@
-var normalize = require('medic-import').normalize,
+var normalize = require('medic-bulk-utils').normalize,
     password = require('password-generator'),
     uuid = require('uuid');
 
