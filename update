@@ -1,0 +1,130 @@
+#!/usr/bin/env node
+
+var path = require('path');
+
+var basePath = process.argv[1].split(path.sep),
+    self = basePath.pop(),
+    stats = { rows: 0, updates: 0 },
+    updates = {
+      docs: []
+    },
+    index = {},
+    data;
+
+var usageInfo = `
+Usage:
+
+  cat updates.json | ${self} index.json
+
+Description:
+
+Examples:
+
+  Update the \`parent\` property on a set of docs, where \`parent\` is an
+  embedded doc.
+
+    Data to update provided by client:
+
+      $ cat updates.csv
+      uuid,parent
+      0ee7d41b,74a7f78e
+
+    Index generated with \`jq\` and \`_all_docs\` view:
+
+      $ cat index.json
+      [
+        {
+          "_id": "0ee7d41b",
+          ...
+        },
+        {
+          "_id": "74a7f78e",
+          ...
+        },
+      ]
+
+    cat updates.csv | medic-csv-to-json | ${self} index.json > updates.json
+    curl -H 'content-type:application/json' \\
+         -d@updates.json $COUCH_URL/medic/_bulk_docs
+
+`;
+
+var usage = function() {
+  console.error(usageInfo);
+  process.exit(1);
+};
+
+if (process.argv.length < 3) {
+  console.error('\nError: Please provide the file system path to the index.');
+  usage();
+} else {
+  // create index
+  var tmp = require(path.resolve(process.argv[2]));
+  if (Array.isArray(tmp)) {
+    tmp.forEach(function(obj) {
+      try {
+        index[obj._id] = obj;
+      } catch(e) {
+        console.error(obj);
+        throw e;
+      }
+    });
+  }
+}
+
+var prop = function(obj, path, value) {
+  if (typeof path == 'string') {
+    return prop(obj, path.split('.'), value);
+  } else if (path.length == 1 && typeof value !== 'undefined') {
+    return obj[path[0]] = value;
+  } else if (path.length == 0) {
+    return obj;
+  } else {
+    return prop(obj[path[0]], path.slice(1), value);
+  }
+};
+
+/*
+ * Special property `uuid` used as identifier for doc that is being updated.
+ */
+var onRow = function(row) {
+  stats.rows++;
+  var doc = index[row.uuid];
+  if (!doc) {
+    throw new Error(`Index missing uuid ${row.uuid}.`);
+  }
+  Object.keys(row).forEach(function(k) {
+    // support dot notation
+    var obj = prop(doc, k);
+    if (!obj) {
+      // if no properties match on doc then skip
+      return;
+    }
+    if (typeof index[row[k]] !== 'undefined') {
+      // the key value is in the doc index
+      prop(doc, k, index[row[k]]);
+      updates.docs.push(doc);
+      stats.updates++;
+    } else {
+      // simple property update
+      prop(doc, k, row[k]);
+      updates.docs.push(doc);
+      stats.updates++;
+    }
+  });
+};
+
+
+process.stdin.setEncoding('utf8');
+
+var input = '';
+process.stdin.on('data', function (chunk) {
+  input += chunk;
+});
+
+process.stdin.on('end', function () {
+  data = JSON.parse(input);
+  data.forEach(onRow);
+  process.stdout.write(JSON.stringify(updates));
+  console.error(stats);
+});
