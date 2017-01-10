@@ -3,7 +3,6 @@ DOCS = docs/format-csv.md \
        docs/import.md \
        docs/export-mysql-query.md \
        docs/extend-properties.md \
-       docs/collect-user-data.md \
        docs/BulkEditingCookbook.md
 
 .PHONY: docs/BulkEditingCookbook.md
@@ -25,10 +24,6 @@ docs/export-mysql-query.md: export-mysql-query
 docs/extend-properties.md: extend-properties
 	(echo '```'; ./extend-properties -h; echo '```') > \
 	  docs/extend-properties.md 2>&1
-
-docs/collect-user-data.md: collect-user-data
-	(echo '```'; ./collect-user-data; echo '```') > \
-	  docs/collect-user-data.md 
 
 docs/BulkEditingCookbook.md:
 	./node_modules/.bin/doctoc --maxlevel 2 docs/BulkEditingCookbook.md
