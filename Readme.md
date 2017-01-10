@@ -11,7 +11,6 @@ The following command line tools are installed with this package:
  - [medic-csv-to-json](docs/csv-to-json.md)
  - [medic-update-embedded](docs/update-embedded.md)
  - [medic-extend-properties](docs/extend-properties.md)
- - [medic-collect-user-data](docs/collect-user-data.md)
  - [medic-export-mysql-query](docs/export-mysql-query.md)
 
 # Getting Started

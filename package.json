@@ -16,7 +16,6 @@
     "medic-csv-to-json": "./csv-to-json",
     "medic-extend-properties": "./extend-properties",
     "medic-update-embedded": "./update-embedded",
-    "medic-collect-user-data": "./collect-user-data",
     "medic-stats": "./stats"
   },
   "dependencies": {
