@@ -1,5 +1,32 @@
 # Bulk Editing Cookbook
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Setup](#setup)
+- [Fetch docs based on plain text list of UUIDs](#fetch-docs-based-on-plain-text-list-of-uuids)
+  - [Dealing with null values and view queries](#dealing-with-null-values-and-view-queries)
+- [Checking results after a bulk update](#checking-results-after-a-bulk-update)
+  - [Verify it parses and the `ok` property is always true](#verify-it-parses-and-the-ok-property-is-always-true)
+  - [Verify the revision was incremented by one](#verify-the-revision-was-incremented-by-one)
+  - [Clean up nulls in view results](#clean-up-nulls-in-view-results)
+- [Dealing with bulk update failures](#dealing-with-bulk-update-failures)
+- [Splitting a bulk update](#splitting-a-bulk-update)
+- [Prepare user and contact data for import](#prepare-user-and-contact-data-for-import)
+- [Fetch branch (place-level-1) hierarchy information](#fetch-branch-place-level-1-hierarchy-information)
+- [Updating a static value](#updating-a-static-value)
+- [Editing documents based on columns in a CSV file](#editing-documents-based-on-columns-in-a-csv-file)
+- [Prepare a user's place data for bulk edit](#prepare-a-users-place-data-for-bulk-edit)
+- [Prepare a user's report data for bulk edit](#prepare-a-users-report-data-for-bulk-edit)
+- [Bulk edit data related to a user (via PouchDB)](#bulk-edit-data-related-to-a-user-via-pouchdb)
+- [Prune a large contact](#prune-a-large-contact)
+- [Update embedded docs](#update-embedded-docs)
+- [Checking doc stats](#checking-doc-stats)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 # Setup
 
 Added these aliases because we use these options frequently:

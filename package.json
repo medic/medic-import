@@ -6,7 +6,9 @@
   "repository": "https://github.com/medic/medic-bulk-utils",
   "license": "MIT",
   "main": "./main.js",
-  "engines": { "node": ">=4.0.0" },
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "bin": {
     "medic-import": "./import",
     "medic-format-csv": "./format-csv",
@@ -22,5 +24,8 @@
     "password-generator": "^2.0.2",
     "uuid": "^2.0.2",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "doctoc": "^1.2.0"
   }
 }

@@ -3,7 +3,10 @@ DOCS = docs/format-csv.md \
        docs/import.md \
        docs/export-mysql-query.md \
        docs/extend-properties.md \
-       docs/collect-user-data.md
+       docs/collect-user-data.md \
+       docs/BulkEditingCookbook.md
+
+.PHONY: docs/BulkEditingCookbook.md
 
 all: docs
 	
@@ -26,6 +29,9 @@ docs/extend-properties.md: extend-properties
 docs/collect-user-data.md: collect-user-data
 	(echo '```'; ./collect-user-data; echo '```') > \
 	  docs/collect-user-data.md 
+
+docs/BulkEditingCookbook.md:
+	./node_modules/.bin/doctoc --maxlevel 2 docs/BulkEditingCookbook.md
 
 cleandocs:
 	rm $(DOCS)
