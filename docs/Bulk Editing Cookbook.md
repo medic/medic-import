@@ -392,8 +392,8 @@ Fetch all the child places:
 curljz -G \
   --data-urlencode 'startkey=["clinic","'$place'"]' \
   --data-urlencode 'endkey=["clinic","'$place'",{}]' \
-  "$COUCH_URL/_design/medic/_view/facilities_by_parent?include_docs=true" | \
-  jq '{docs: [ .rows[] | .doc ]}' > docs.json
+  "$COUCH_URL/medic/_design/medic/_view/facilities_by_parent?include_docs=true" | \
+  jq '{docs: [ .rows[] | select(.doc).doc ]}' > docs.json
 ```
 
 Then edit `docs.json` and save it using the `_bulk_docs` API.
