@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [ -z $COUCH_URL ]; then
-  echo 'Define COUCH_URL'
-  exit
-fi
-
-curl "$COUCH_URL/medic/_design/medic-client/_view/doc_by_type?key=\[\"district_hospital\"\]&include_docs=true" \
-  | jq '.rows[] | { name: .doc.name, id: .doc._id}'

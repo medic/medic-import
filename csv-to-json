@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+
+var csv = require('fast-csv'),
+    stats = {
+      header: 1,
+      rows: 0
+    };
+
+csv
+ .fromStream(process.stdin, {headers: true})
+  .on("data", function(data){
+    stats.rows++;
+    if (stats.rows === 1) {
+      // skip header row, assumes csv header.
+      console.log('[', JSON.stringify(data));
+    } else {
+      console.log(',', JSON.stringify(data));
+    }
+  })
+  .on("end", function(){
+    console.log(']');
+    console.warn(stats);
+  });

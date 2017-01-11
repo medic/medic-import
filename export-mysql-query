@@ -3,7 +3,6 @@
 var fs = require('fs'),
     url = require('url'),
     path = require('path'),
-    mysql = require('mysql'),
     csv = require('fast-csv');
 
 var SELF = process.argv[1].split(path.sep).pop();
@@ -27,6 +26,12 @@ Enviornment Variables:
 
   MYSQL_URL
 
+Dependencies:
+
+  This script is rarely used so mysql dependency is handled manually:
+
+    npm install mysql
+ 
 Examples:
 
   MYSQL_URL=mysql://root@localhost:3306/mydb ./${SELF} query.sql \\
@@ -40,7 +45,9 @@ if (!process.env.MYSQL_URL) {
   usage();
 }
 
-var mysqlOpts = url.parse(process.env.MYSQL_URL);
+// Allow usage to print without mysql dependency
+var mysql = require('mysql'),
+    mysqlOpts = url.parse(process.env.MYSQL_URL);
     
 var connection = mysql.createConnection({
   host     : mysqlOpts.hostname,

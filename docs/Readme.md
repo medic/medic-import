@@ -1,5 +1,6 @@
-Overview
-========
+# Importing Data
+
+## Overview
 
 The import process is divided into two major parts: formating data and importing data.
 
@@ -9,14 +10,13 @@ or groups, it's best to request a portion of the import data to test with
 beforehand.
 
 If by chance you do need to introspect a MySQL database we have a script that
-outputs CSV for use in the formatting step.  See `./export-mysql-query` and
-[docs/export-mysql-query.md](docs/export-mysql-query.md) for more info. 
+outputs CSV for use in the formatting step.  See
+[./export-mysql-query.md](./export-mysql-query.md) for more info. 
 
-Formatting Data
-================
+## Formatting
 
-See `./format-csv` output, [docs/format-csv.md](docs/format-csv.md) and
-[docs/format-csv-config.md](docs/format-csv-config.md) for more info. 
+See [format-csv docs](./format-csv.md) and [format-csv-config
+docs](./format-csv-config.md) for more info. 
 
 Use this script to normalize your data and preserve or format any fields that
 are important, like external ID, or group ID.
@@ -45,21 +45,18 @@ first letter of the first name.
 
 Do quick scan to make sure the data looks right then proceed to the next step.
 
-Importing Data
-===============
+## Importing
 
-See `./import -h` and [docs/import.md](docs/import.md) for more info. 
+See [import docs](./import.md) for more info. 
 
 Once the import process if finished you can share the data files with people for
 acceptance testing.  Since the files contain usernames and passwords you should
 post them in Slack, not Github.
 
 
-Testing
-=======
+## Testing
 
-New Users
-----------
+### New Users
 
   1. Navigate to myproject.app.medicmobile.org and login with a new user
   2. Open Chrome developer tools so that you can see Network tab and the console
@@ -73,11 +70,9 @@ New Users
 Once we have a better solution for initial replication, we can reduce that
 10-15 mins to something smaller.
 
-Notes
-=====
+## Notes
 
-Performance
-------------
+### Performance
 
 We found that importing lots of data can slow down syncing and loading of
 phones, so until we have solutions follow a few rules of thumb:

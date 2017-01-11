@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+
+var input = '',
+    stats;
+
+var countParents = function(data) {
+  var parent = data.parent,
+      contact = data.contact;
+  if (!stats.type) {
+    stats.type = data.type;
+  }
+  if (!stats.name) {
+    stats.name = data.name;
+  }
+  if (!stats.id) {
+    stats.id = data._id;
+  }
+  if (!stats.rev) {
+    stats.rev = data._rev;
+  }
+  if (parent) {
+    stats.depth++;
+    countParents(parent);
+  }
+  if (contact) {
+    stats.depth++;
+    countParents(contact);
+  }
+};
+
+process.stdin.setEncoding('utf8');
+
+process.stdin.on('readable', function() {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    input += chunk;
+  }
+});
+
+process.stdin.on('end', function() {
+  var output = [],
+      data = JSON.parse(input);
+  if (data.rows) {
+    data = data.rows;
+  } else if (data.docs) {
+    data = data.docs;
+  } else if (data.constructor !== Array) {
+    data = [data];
+  }
+  data.forEach(function(row) {
+    if (!row || typeof row !== 'object') {
+      return;
+    }
+    stats = { depth: 0 };
+    stats.length = JSON.stringify(row).length;
+    countParents(row.doc || row);
+    output.push(stats);
+  });
+  if (output.length <= 1) {
+    console.log(JSON.stringify(output));
+  } else {
+    var totals = { docs: output.length, depth: 0, length: 0 };
+    output.forEach(function(stat) {
+      totals.depth += stat.depth;
+      totals.length += stat.length;
+    });
+    console.log(JSON.stringify(totals));
+  }
+});
