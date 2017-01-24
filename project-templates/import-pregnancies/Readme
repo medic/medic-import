@@ -1,11 +1,36 @@
 
-Dry run import:
+This example project assumes the users and contacts for the CHW's have been
+created.  See the other project templates for importing users and contacts.
 
-  make && make import
+Environment variables:
 
-Live import:
+  COUCH_URL
+  USER_DATA
+  PREGNANCY_DATA
+  EXTRA_IMPORT_FLAGS
 
-  make && COUCH_URL=$LG_PROD EXTRA_IMPORT_FLAGS='' make import
+Example:
 
-Deliver imported data `dist/pregnancies-final.csv` to project manager.
+  Export the target instance URL:
+
+    export KK_PROD=https://admin:secret@kenya-kids.app.medicmobile.org
+
+  Format and collect data:
+
+    COUCH_URL="$KK_PROD" \
+    USER_DATA='Thika.users.updated.csv' \
+    PREGNANCY_DATA='Pregnancy Data - Thika.csv' \
+    make
+
+  Dry run import:
+
+    make import
+
+  Live import:
+
+    COUCH_URL="$KK_PROD" \
+    EXTRA_IMPORT_FLAGS='' \
+    make import
+
+  Deliver imported data `dist/pregnancies-final.csv` to project manager.
 

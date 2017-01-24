@@ -1,0 +1,11 @@
+id,name,mobile_no,age,due_date,latitude,longitude,woman_uri,landmark_uri,chpcode,created,pstatus,pregstatus,source_create_date,sync_back_key,person_image_server,landmark_image_server,recordstatus,dangerSigns,riskFactors
+93882143,Mamade Hristos,0000-000-000,23,2/12/2017,0,0,null,null,PEDR181982,1/5/2017 20:58:20,Expecting,High Risk,1/5/2017,0,NULL,NULL,1,,Previous difficulties in childbirth+
+93882113,Imumba Elizabeth,0922-387-071,35,4/6/2017,0,0,null,null,PEDR181982,12/30/2016 21:51:01,Expecting,Healthy,12/29/2016,0,NULL,NULL,1,,
+93882112,Sally Ranjiru,0000-000-000,21,3/30/2017,0,0,null,null,PEDR181982,12/30/2016 21:50:58,Expecting,Healthy,12/23/2016,0,NULL,NULL,1,,
+93882094,Irenij L,0000-000-000,25,1/6/2017,-5.7086,20.3993,null,null,PEDR181982,12/20/2016 9:42:28,Expecting,Healthy,11/30/2016,0,NULL,NULL,1,,
+93882018,Irenij Lisa,0000-000-000,29,3/6/2017,-5.8034,20.1812,null,null,PEDR181982,12/2/2016 12:20:48,Expecting,Healthy,11/30/2016,0,NULL,NULL,1,,
+93881983,Thirawa Margaret,0963-883-275,30,1/22/2017,-5.3938,20.9883,null,null,PEDR181982,11/26/2016 8:34:32,Expecting,Healthy,11/26/2016,0,NULL,NULL,1,,
+93872164,Kyonakabi Pamela,0000-000-000,19,3/20/2017,-5.3488,20.9938,null,null,PEDR181982,9/15/2016 16:49:25,Expecting,Healthy,9/13/2016,0,NULL,NULL,1,"Pain, pressure or cramping in abdomen+",
+93882026,Diana Vikiba,0901-322-531,25,12/16/2016,0,0,,,PEDR299822,12/6/2016 13:21:29,Expecting,High Risk,12/6/2016,0,,,1,"Pain, pressure or cramping in abdomen+",First pregnancy+
+93882014,Mulara Patty  ,0912-999-221,21,3/12/2017,0,0,,null,PEDR299822,12/2/2016 11:10:15,Expecting,High Risk,11/28/2016,0,,NULL,1,,Previous miscarriages+Previous difficulties in childbirth+
+93882013,Gilmaka Bonnie,0901-091-232,29,4/28/2017,-5.2838,20.4578,,null,PEDR299822,12/2/2016 11:08:17,Expecting,High Risk,11/15/2016,0,,NULL,1,"Pain, pressure or cramping in abdomen+",Previous miscarriages+

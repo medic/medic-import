@@ -1,4 +1,4 @@
-var normalize = require('medic-import').normalize,
+var normalize = require('medic-bulk-utils').normalize,
     uuid = require('uuid');
 
 var TZ = 'GMT';
@@ -6,7 +6,10 @@ var TZ = 'GMT';
 module.exports = {
   columns: {
     id: 'id',
-    source_key: 'source_key',
+    source_key: {
+      use: 'source_key',
+      optional: true
+    },
     name: {
       // todo allow passing in only a function then just assume key and source
       // col name match

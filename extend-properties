@@ -13,23 +13,31 @@ var basePath = process.argv[1].split(path.sep),
     tmp;
 
 var usageInfo = `
-Usage: cat data.json | ./${self} [-ah] index.json > data-edited.json
+Usage: cat data.json | ./node_modules/.bin/${self} [-ah] index.json > data-edited.json
 
 Description:
 
-  Take a list of JSON documents/objects on standard input and apply changes to it. 
-  The index file is also a list of JSON documents/objects and must include an
-  \`id\` property grouped with other properties.
+  Take a list of JSON objects with an \`_id\` property on standard input and
+  apply changes to it.  The changes are based on an index file that is a list
+  of JSON objects with an \`id\` property and the other properties you want to
+  change.
+
+  This command is basically a wrapper around the Underscore.js \`extend\`
+  function and calls it like this:
+
+      newDoc = _.extend(origDoc, change);
 
 Options:
   
   -h  This help information.
 
-  -a  Update all occurrences of an object on a document, rather than just
-      updating the first occurrence.  This can be useful to update embedded
-      documents, but be warned because this can cause conflicts if your
-      document is self-referential or has a version of itself embedded in
-      itself.
+  -a  Update all occurrences of an object, rather than just updating the first
+      or top level occurrence.  Be careful when using this on embedded
+      documents, because this can cause conflicts if the embedded document is
+      modified but the referenced doc is not updated.  To modify embedded
+      documents properly you should update the source document first and then
+      replace the embedded document so the \`_rev\` property matches.
+
 `;
 
 
@@ -72,8 +80,7 @@ var walkProperties = function(data) {
   Object.keys(data).forEach(function(k) {
     if (k === '_id' && index[data[k]]) {
       if (updates[data[k]] && !options.updateAll) {
-        // only update self-referential embedded objects when update all flag
-        // is set.
+        // only modify embedded docs when update all flag is set.
         return;
       }
       data = _.extend(data, index[data[k]]);
