@@ -1,0 +1,339 @@
+#!/usr/bin/env node
+
+var http = require('http'),
+    path = require('path'),
+    url = require('url'),
+    fs = require('fs');
+
+var csv = require('fast-csv'),
+    SELF = process.argv[1].split(path.sep).pop(),
+    flags = {};
+
+var usageInfo = `
+Usage:
+
+  COUCH_URL=http://admin:secret@localhost:5988 \\
+    ./${SELF} users.json contacts.json records.csv
+
+Options:
+
+  -d  Dry run, only prints request data.
+
+`;
+
+var usage = function() {
+  console.log(usageInfo);
+  process.exit(1);
+};
+
+if (!process.env.COUCH_URL || process.argv.length < 4) {
+  console.error("Define COUCH_URL");
+  usage();
+}
+
+if (process.argv.indexOf("-d") != -1) {
+  flags.dryrun = true;
+  process.argv.splice(process.argv.indexOf("-d"), 1);
+}
+
+var options = url.parse(process.env.COUCH_URL);
+
+if (options.protocol === 'https:') {
+  console.error('using https module');
+  http = require('https');
+}
+
+var stats = {rows: 0, requests:0, responses:{}},
+    chpcodeUserMap = {},
+    contacts = {},
+    people = {},
+    users = {};
+
+var recordStat = function(obj) {
+  var resCode = obj.statusCode;
+  if (resCode) {
+    if (typeof stats.responses[resCode] === 'undefined') {
+      stats.responses[resCode] = 0;
+    }
+    stats.responses[resCode]++;
+  }
+}
+
+var parseUsers = function() {
+  var usersData = require(process.argv[2]),
+      contactsData = require(process.argv[3]);
+  if (usersData.rows) {
+    usersData = usersData.rows;
+  }
+  if (usersData.docs) {
+    usersData = usersData.docs;
+  }
+  if (contactsData.rows) {
+    contactsData = contactsData.rows;
+  }
+  if (usersData.length === 0) {
+    throw new Error('no user data found');
+  }
+  if (contactsData.length === 0) {
+    throw new Error('no user data found');
+  }
+  contactsData.forEach(function(row) {
+    var doc = row.doc;
+    contacts[doc._id] = doc;
+  });
+  usersData.forEach(function(row) {
+    if (!row.doc) {
+      console.error(row);
+      throw new Error('row missing doc property');
+    }
+    var doc = row.doc;
+    if (!doc.external_id || !doc._id) {
+      console.error(doc);
+      throw new Error('user doc missing required field');
+    }
+    if (chpcodeUserMap[doc.external_id]) {
+      console.error(doc);
+      throw new Error('external_id duplicated');
+    }
+    chpcodeUserMap[doc.external_id] = doc._id;
+    if (contacts[doc.contact_id]) {
+      doc.contact = contacts[doc.contact_id];
+    }
+    users[doc._id] = doc;
+  });
+  parseRecords();
+};
+
+var parseRecords = function() {
+  var fileStream = fs.createReadStream(process.argv[4]),
+      csvStream = csv({headers:true});
+  csvStream
+    .on("data", handleRow)
+    .on("end", function() {
+      console.error('done parsing rows');
+    });
+  fileStream.pipe(csvStream);
+};
+
+// ms of wait between requests, use 500 if loads are normal.
+var wait = 2000; 
+
+var handleRow = function(row) {
+  stats.rows++;
+  if (!row['chpcode']) {
+    console.error(row);
+    throw new Error('missing chpcode field');
+  }
+  if (!chpcodeUserMap[row['chpcode']]) {
+    console.error(row);
+    throw new Error('missing chpcode user mapping');
+  }
+  setTimeout(function() {
+    createFamily(row, function(err) {
+      if (err) console.error('failed to create family %s error %s', row.family_uuid, err);
+      createPerson(row, function(err) {
+        if (err) console.error('failed to create person %s error %s', row.person_uuid, err);
+        updateFamily(row, function(err) {
+          if (err) console.error('failed to update family %s error %s', row.family_uuid, err);
+        });
+        createPregnancy(row, function(err) {
+          if (err) console.error('failed to create pregnancy %s error %s', row.pregnancy_uuid, err);
+        });
+      });
+    });
+  }, stats.rows * (flags.dryrun ? 0 : wait));
+};
+
+var createFamily = function(row, cb) {
+  var user = users[chpcodeUserMap[row.chpcode]];
+  if (!user) {
+    throw new Error(
+      'family ' + row.id + ' user ' + row.chpcode + ' not found'
+    );
+  }
+  if (!user.facility_id) {
+    throw new Error('user is missing place ' + chpcodeUserMap[row.chpcode]);
+  }
+  if (!row.family_uuid) {
+    throw new Error('family_uuid is missing from row');
+  }
+  var family = {
+    _id: row.family_uuid,
+    type: 'clinic',
+    reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
+    name: row.family_name,
+    geolocation: row.geolocation,
+    phone: row.phone,
+    parent: user.facility_id
+  };
+  options.path = '/api/v1/places';
+  options.method = 'POST';
+  options.headers = {
+    'content-type': 'application/json'
+  };
+  if (flags.dryrun) {
+    console.log(options.method, options.path);
+    console.log(JSON.stringify(family,null,2));
+    return cb();
+  }
+  stats.requests++;
+  var req = http.request(options, function(res) {
+    recordStat(res);
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      return cb(res.statusCode);
+    } 
+    cb();
+  });
+  req.on('error', function(e) {
+    if (e) throw e;
+  });
+  req.write(JSON.stringify(family));
+  req.end();
+};
+
+var createPerson = function(row, cb) {
+  if (!row.person_uuid) {
+    throw new Error('person_uuid is missing from row');
+  }
+  var person = {
+    _id: row.person_uuid,
+    name: row.name,
+    reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
+    date_of_birth: row.date_of_birth,
+    dob_method: 'approx',
+    notes: '',
+    phone: row.phone,
+    place: row.family_uuid
+  };
+  options.path = '/api/v1/people';
+  options.method = 'POST';
+  options.headers = {
+    'content-type': 'application/json'
+  };
+  if (flags.dryrun) {
+    console.log(options.method, options.path);
+    console.log(JSON.stringify(person,null,2));
+    return cb();
+  }
+  stats.requests++;
+  var req = http.request(options, function(res) {
+    recordStat(res);
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      return cb(res.statusCode);
+    }
+    cb();
+  });
+  req.on('error', function(e) {
+    if (e) throw e;
+  });
+  req.write(JSON.stringify(person));
+  req.end();
+};
+
+var createPregnancy = function(row, cb) {
+  var user = users[chpcodeUserMap[row.chpcode]];
+  if (!user) {
+    throw new Error(
+      'pregnancy ' + row.id + ' user ' + row.chpcode + ' not found.'
+    );
+  }
+  if (!user.contact) {
+    throw new Error('user is missing contact ' + chpcodeUserMap[row.chpcode]);
+  }
+  if (!row.pregnancy_uuid) {
+    throw new Error('pregnancy_uuid is missing from row');
+  }
+  var pregnancy = {
+    _id: row.pregnancy_uuid,
+    reported_date: new Date(row.created).valueOf(),
+    imported_date: new Date().toISOString(),
+    type: 'data_record',
+    form: 'pregnancy',
+    content_type: 'xml',
+    content: '<pregnancy version="old"><null/></pregnancy>',
+    fields: {
+      patient_id: row.person_uuid,
+      patient_name: row.name,
+      lmp_method: 'calendar',
+      lmp_date: row.lmp_date, // Mmm DD, YYYY
+      edd: row.due_date,
+      patient_age_at_lmp: row.age,
+      geolocation: row.geolocation
+    },
+    contact: user.contact // this should be the CHP
+  };
+  if (row.riskFactors && !row.riskFactors.match(/^\s*null\s*$/i)) {
+    pregnancy.fields.risk_factors = row.riskFactors;
+  }
+  if (row.dangerSigns && !row.dangerSigns.match(/^\s*null\s*$/i)) {
+    pregnancy.fields.danger_signs = row.dangerSigns;
+  }
+  options.path = '/medic/';
+  options.method = 'POST';
+  options.headers = {
+    'content-type': 'application/json'
+  };
+  if (flags.dryrun) {
+    console.log(options.method, options.path);
+    console.log(JSON.stringify(pregnancy,null,2));
+    return cb();
+  }
+  stats.requests++;
+  var req = http.request(options, function(res) {
+    recordStat(res);
+    if (res.statusCode != 201) {
+      return cb(res.statusCode);
+    }
+    cb();
+  });
+  req.on('error', function(e) {
+    if (e) throw e;
+  });
+  req.write(JSON.stringify(pregnancy));
+  req.end();
+};
+
+var updateFamily = function(row, cb) {
+  if (!row.person_uuid) {
+    throw new Error('person_uuid is missing from row');
+  }
+  var update = {
+    contact: row.person_uuid
+  };
+  options.path = '/api/v1/places/' + row.family_uuid;
+  options.method = 'POST';
+  options.headers = {
+    'content-type': 'application/json'
+  };
+  if (flags.dryrun) {
+    console.log(options.method, options.path);
+    console.log(JSON.stringify(update,null,2));
+    return cb();
+  }
+  stats.requests++;
+  var req = http.request(options, function(res) {
+    recordStat(res);
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      return cb(res.statusCode);
+    }
+    cb();
+  });
+  req.on('error', function(e) {
+    if (e) throw e;
+  });
+  //console.log(JSON.stringify(update));
+  req.write(JSON.stringify(update));
+  req.end();
+};
+
+parseUsers();
+
+process.on('exit', function (){
+  console.error(stats);
+});
+
+process.on('SIGINT', function() {
+  process.exit();
+});
