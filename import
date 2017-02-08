@@ -214,6 +214,7 @@ if (process.argv.indexOf('-c') !== -1) {
 if (process.env.COUCH_URL) {
   reqOpts = url.parse(process.env.COUCH_URL);
 } else {
+  console.error('Missing COUCH_URL');
   usage();
 }
 
