@@ -269,7 +269,7 @@ var importUser = function(obj) {
     username: obj.username,
     password: obj.password,
     type: obj.type || 'district-manager',
-    language: obj.lang || 'en',
+    language: obj.lang || obj.language || 'en',
     known: typeof obj.known === 'undefined' ? true: Boolean(obj.known),
     external_id: obj.external_id,
     place: obj.place || options.placeUUID,
