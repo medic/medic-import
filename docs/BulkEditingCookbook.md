@@ -8,6 +8,7 @@
   - [Setup](#setup)
 - [Recipes](#recipes)
   - [Fetch docs based on plain text list of UUIDs](#fetch-docs-based-on-plain-text-list-of-uuids)
+  - [Bulk Delete](#bulk-delete)
   - [Prepare user and contact data for import](#prepare-user-and-contact-data-for-import)
   - [Fetch branch (place-level-1) hierarchy information](#fetch-branch-place-level-1-hierarchy-information)
   - [Updating a static value](#updating-a-static-value)
@@ -61,6 +62,21 @@ cat file | \
   curljz -d@- "$COUCH_URL/medic/_all_docs?include_docs=true" | \
   jq '{docs: [ .rows[] | select(.doc).doc ]}' > docs.json
 ```
+
+## Bulk Delete
+
+You have a large batch of documents that you want to delete.
+
+Use `jq` to set the `_deleted` property on each doc and save them using the
+bulk edit API:
+
+```
+cat docs.json | \
+  jq '{"docs":[ .docs[] | ._deleted = true ]}' | \
+  curljz -d@- $COUCH_URL/medic/_bulk_docs  > results.json
+```
+
+Then [check results for errors](#checking-results-after-a-bulk-update).
 
 ## Prepare user and contact data for import
 
