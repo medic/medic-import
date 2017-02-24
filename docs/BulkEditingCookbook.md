@@ -43,7 +43,7 @@ alias curljz="curl --compressed -H 'content-type:application/json'"
 Install [jq](https://stedolan.github.io/jq/) and
 [json-diff](https://www.npmjs.com/package/json-diff).
 
-
+Get familiar with [Bulk Docs API](http://docs.couchdb.org/en/2.0.0/api/database/bulk-api.html).
 
 
 # Recipes
