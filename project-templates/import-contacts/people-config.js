@@ -43,7 +43,7 @@ var config = {
     },
     date_of_birth: {
       use: 'Date de naissance',
-      format: [normalize.date]
+      format: [normalize.date, 'YYYY']
     },
     menage: 'Menage',
     sex: 'Sexe',
