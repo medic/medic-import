@@ -19,10 +19,11 @@ A new project typically begins with a spreadsheet of raw data that you want to
 update or add (import).  This might be an export from a database or maintained
 some other way.
 
-Create a directory for your project:
+Create a directory for your project, name it whatever you want:
 
 ```
-mkdir medic-projects-493
+mkdir medic-projects-493 && \
+cd medic-projects-493
 ```
 
 Create your package.json (using -y to accept defaults):
