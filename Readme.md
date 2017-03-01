@@ -25,21 +25,16 @@ Create a directory for your project:
 mkdir medic-projects-493
 ```
 
-Create your package.json:
+Create your package.json (using -y to accept defaults):
 
 ```
-{
-  "name": "medic-projects-493",
-  "dependencies": {
-    "medic-bulk-utils": "latest"
-  }
-}
+npm init -y
 ```
 
-Install the dependencies:
+Install this dependency:
 
 ```
-npm install
+npm install --save medic-bulk-utils
 ```
 
 # Project Templates
