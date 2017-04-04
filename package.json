@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "fast-csv": "^2.1.0",
+    "flat": "^2.0.1",
     "moment": "^2.17.1",
     "password-generator": "^2.0.2",
     "underscore": "^1.8.3",

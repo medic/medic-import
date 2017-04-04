@@ -3,6 +3,7 @@
 var url = require('url'),
     path = require('path'),
     http = require('http'),
+    flat = require('flat'),
     csv = require('fast-csv');
 
 var importer,
@@ -58,6 +59,13 @@ var supportedTypes = {
   },
   'places-update': {
     required: ['uuid']
+  },
+  'records': {
+    required: ['uuid', 'reported_date'],
+    constraints: {
+      unique: ['uuid']
+    },
+    doc_type: 'data_record'
   }
 };
 
@@ -203,11 +211,14 @@ if (process.argv.indexOf('-p') !== -1) {
 }
 
 if (process.argv.indexOf('-c') !== -1) {
-  options.columns = {};
+  options.columns = [];
   process.argv.splice(process.argv.indexOf('-c'), 2)[1].split(',')
     .forEach(function(col) {
       var parts = col.split(':');
-      options.columns[parts[0]] = parts[1] || parts[0];
+      options.columns.push({
+        source: parts[0],
+        target: parts[1]
+      });
     });
 }
 
@@ -492,6 +503,57 @@ var updatePlace = function(obj) {
   }, stats.rows * options.wait);
 };
 
+var importRecord = function(obj, type) {
+  var config = supportedTypes[options.recordType],
+      record = {
+        imported_date: new Date().toISOString(),
+      };
+  Object.keys(obj).forEach(function(key) {
+    if (key === 'uuid') {
+      record._id = obj[key];
+    } else if (key === 'reported_date') {
+      record.reported_date = Number(obj[key]);
+    } else {
+      record[key] = obj[key];
+    }
+  });
+  record = flat.unflatten(record); // support dot notation in keys
+  record.type = config.doc_type;
+  record.content_type = type || 'xml';
+  setTimeout(function() {
+    reqOpts.method = 'POST';
+    reqOpts.path = '/medic/';
+    reqOpts.headers = {
+      'content-type': 'application/json'
+    };
+    if (options.dryrun) {
+      console.log(reqOpts.method, reqOpts.path);
+      return console.log(JSON.stringify(record, null, 2));
+    }
+    stats.requests++;
+    var req = http.request(reqOpts, function(res) {
+      recordStat(res);
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+          outputError('  ' + chunk);
+        });
+        return outputError(
+          'failed to import record %s status %s %s:',
+          obj.name,
+          res.statusCode,
+          res.statusMessage
+        );
+      }
+    });
+    req.on('error', function(e) {
+      if (e) throw e;
+    });
+    req.write(JSON.stringify(record));
+    req.end();
+  }, stats.rows * options.wait);
+};
+
 if (options.recordType === 'users') {
   importer = importUser;
 } else if (options.recordType === 'people') {
@@ -500,14 +562,17 @@ if (options.recordType === 'users') {
   importer = importPlace;
 } else if (options.recordType === 'places-update') {
   importer = updatePlace;
+} else if (options.recordType === 'records') {
+  importer = importRecord;
 }
 
 var onDataHandler = function(obj) {
   stats.rows++;
   if (options.columns) {
     var newObj = {};
-    Object.keys(options.columns).forEach(function(key) {
-      newObj[options.columns[key]] = obj[key];
+    options.columns.forEach(function(col) {
+      // if target field was passed in then use it
+      newObj[col.target || col.source] = obj[col.source];
     });
     obj = newObj;
   }
