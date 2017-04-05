@@ -256,7 +256,7 @@ var recordStat = function(obj) {
 var validate = function(obj) {
   var config = supportedTypes[options.recordType];
   config.required.forEach(function(field) {
-    if (typeof obj[field] === 'undefined') {
+    if (typeof obj[field] === 'undefined' || obj[field] === null) {
       throw new Error(`Missing required field: ${field}`);
     }
   });
