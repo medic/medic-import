@@ -12,6 +12,7 @@ The following command line tools are installed with this package:
  - [medic-update-embedded](docs/update-embedded.md)
  - [medic-extend-properties](docs/extend-properties.md)
  - [medic-export-mysql-query](docs/export-mysql-query.md)
+ - [medic-migrations](docs/migrations.md)
 
 # Getting Started
 

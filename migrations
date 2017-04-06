@@ -16,7 +16,6 @@ TEMP_DIR="$TMPDIR/medic-migrations"
 
 usage () {
   cat <<EOT >&2
-
 Usage: $SELF command [parameters] [options]
 
 Description:
@@ -72,6 +71,9 @@ ewu () {
 
 check_cmd () {
   local cmd="$1"
+  if [ -z "$cmd" ]; then
+    usage
+  fi
   local t=1
   for i in `echo $CMDS`; do 
     if [ "$cmd" == "$i" ]; then
@@ -172,8 +174,8 @@ run () {
 
 main() {
   local cmd="$1"
-  shift 1
   check_cmd "$cmd"
+  shift 1
   $cmd $@
 }
 
