@@ -5,7 +5,7 @@ node_modules: package.json
 	npm install
 
 design-doc.json: design-doc.js
-	node design-doc.js > design-doc.json
+	./node_modules/.bin/5984 compile design-doc.js > design-doc.json
 
 clean: 
 	rm design-doc.json
