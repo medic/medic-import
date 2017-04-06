@@ -1,5 +1,6 @@
 ```
-Usage: migrations command [parameters] [options]
+
+Usage: migrations [command]
 
 Description:
   
@@ -7,18 +8,20 @@ Description:
 
 Commands:
   
-  help  Print this usage information.
+  help  Print this information.
 
-  run   Run or execute a migration package, requires a `directory` parameter
-        to the migration package.
+  run <path>
+  
+    Run or execute a migration package.  Requires a `path` parameter to
+    the migration package.
         
-        Basic steps of running a migration are:
+    Basic steps of running a migration are:
 
-          1) Install a ddoc and view on the medic database
-          2) Backup the view data including docs
-          3) Execute and save results from a script that updates the data
-          4) Test to make sure view is empty, this means bad data was fixed
-          5) Delete the migration ddoc
+      1) Install a ddoc and view on a database
+      2) Backup the view data including docs
+      3) Execute and save results from a script that updates the data
+      4) Test to make sure view is empty, this means bad data was fixed
+      5) Delete the migration ddoc
          
 Environment Variables:
 
