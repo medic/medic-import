@@ -156,7 +156,11 @@ run () {
   info "creating design doc from $ddoc"
   $CURLJ -d@"$ddoc" "$COUCH_URL/$db" > /dev/null
 
-  backup "$db" "$name"
+  echo ""
+  read -p "Backup view data? (y/n) " in
+  if [ "$in" == "y" ]; then
+    backup "$db" "$name"
+  fi
 
   info "updating data, saving results in $results"
   "$dir/update" | tee -a "$results"
