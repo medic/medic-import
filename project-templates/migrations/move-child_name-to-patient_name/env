@@ -1,0 +1,4 @@
+MIGRATION_DB=medic
+# name is used for the design doc and view name, only supporting
+# one view at the moment.
+MIGRATION_NAME=migration_move-child_name-to-patient_name

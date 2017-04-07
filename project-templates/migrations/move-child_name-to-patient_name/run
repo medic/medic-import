@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Chain ndjson formatted data together on stdin and stdout to run a data
+# migration.
+#
+
+set -e
+set -o pipefail
+
+if [ ! -z "$DEBUG" ]; then
+  set -x
+fi
+
+./query | \
+./filter | \
+./transform | \
+./update

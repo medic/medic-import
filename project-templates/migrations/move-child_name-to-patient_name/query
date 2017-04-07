@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Fetch data that needs to be migrated.
+#
+
+set -e
+
+if [ ! -z "$DEBUG" ]; then
+  set -x
+fi
+
+source ./env
+
+if [ -z "$COUCH_URL" ]; then
+  echo "Define COUCH_URL" 1>&2
+  exit 1
+fi
+
+DB="$MIGRATION_DB"
+DDOC="_design/$MIGRATION_NAME"
+VIEW="_view/$MIGRATION_NAME"
+
+curl -sS --fail --compressed \
+"$COUCH_URL/$DB/$DDOC/$VIEW?include_docs=true"
