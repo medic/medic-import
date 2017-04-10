@@ -7,11 +7,11 @@ Make Targets
 
   Build and install ddoc:
 
-    COUCH_URL=$MY_COUCH make install
+    make install
 
   Uninstall ddoc:
 
-    COUCH_URL=$MY_COUCH make uninstall
+    make uninstall
 
   Uninstall ddoc and file (reset):
 
@@ -21,58 +21,62 @@ Make Targets
 
     ./run
 
-Example:
-
-  COUCH_URL=$MY_COUCH make install
-  COUCH_URL=$MY_COUCH ./run | tee -a results.ndjson
-
 Environment Variables:
 
   COUCH_URL   The server URL to run against.
 
+Examples:
+
+  COUCH_URL=http://admin:secret@localhost:5984 \
+  make install
+
+  COUCH_URL=http://admin:secret@localhost:5984 \
+  ./run | tee -a results.ndjson
+
 Files descriptions:
 
-env
+  env
 
-  Defines environment variables that are shared.
+    Defines environment variables that are shared.
 
-ddoc/{index.js, map.js}
+  ddoc/{index.js, map.js}
 
-  Design doc source files, these are compiled to ddoc.json.  The query here is
-  dependent on a custom design doc.  This allows us to identify and process
-  the bad data until the database returns no results.
-  
-query
-
-  Query database and stream ndjson to stdout. 
-  
-  Example:
-
-    curl http://localhost:5984/medic/_all_docs?include_docs=true
+    Design doc source files, these are compiled to ddoc.json.  The query here
+    is dependent on a custom design doc.  This allows us to identify and
+    process the bad data until the database returns no results.
     
-filter
+  query
 
-  Filters ndjson on stdin and writes ndjson streaming to stdout.  Does not
-  modify lines, only decides which lines are included in output.
+    Query database and stream ndjson to stdout. 
+    
+    Example:
 
-  Example:
+      curl http://localhost:5984/medic/_all_docs?include_docs=true
+      
+  filter
 
-    jsonfilter 'rows.*.doc'
+    Filters ndjson on stdin and writes ndjson to stdout.  Does not modify
+    lines, only decides which lines are included in output.
 
-transform
+    Example:
 
-  Modifies ndjson and writes to stdout.
+      jsonfilter 'rows.*.doc'
 
-transform.js
+  transform, transform.js
 
-  The javascript that transforms a line of ndjson input.
+    Modifies ndjson and writes ndjson to stdout.
 
-update
+    Example:
 
-  Consume ndjson input and bulk save changes to the database, default to
-  batches of 100 records.  Write results as ndjson to stdout.
+      jsonmap --file=transform.js
 
-run 
+  update
 
-  Chain ndjson formatted data together on stdin and stdout to run a data
-  migration.
+    Consume ndjson input and bulk save changes to the database, default to
+    batches of 100 records.  Write results as ndjson to stdout.
+
+  run 
+
+    Chain ndjson formatted data together on stdin and stdout to run a data
+    migration.
+
