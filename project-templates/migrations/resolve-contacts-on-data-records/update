@@ -118,8 +118,7 @@ var bulkUpdate = function(body, callback) {
 
 var processViewData = function(callback) {
   var options = url.parse(process.env.COUCH_URL);
-  options.path += `/${DB}/_design/${NAME}`;
-  options.path += `/_view/${NAME}`;
+  options.path += `/${DB}/_design/${NAME}/_view/${NAME}`;
   options.path += `?limit=${BATCH_SIZE}&include_docs=true`;
   var req = http.request(options, function(res) {
     if (res.statusCode == 404) {
