@@ -239,8 +239,11 @@ if (options.recordType) {
 }
 
 if (reqOpts.protocol === 'https:') {
-  console.info('using https module');
   http = require('https');
+} else if (reqOpts.protocol === 'http:') {
+  console.warn('using insecure protocol: http');
+} else {
+  throw new Error(`Unsupported protocol: ${reqOpts.protocol}`);
 }
 
 var recordStat = function(obj) {
