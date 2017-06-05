@@ -1,0 +1,120 @@
+Requirements
+
+  node >= 4 https://nodejs.org/
+  make      https://www.gnu.org/software/make/
+  jq        https://stedolan.github.io/jq/
+
+Make does not not support filenames with special characters unfortunately.
+Remove special characters in your filenames if you use them.
+
+Make is not included on OSX by default, you need to install XCode or use a
+package manager like [Brew](https://brew.sh/) or
+[Nix](https://nixos.org/nix/).
+
+Import Steps:
+
+  1) Gather source data, export from a database into linked spreadsheets.  By
+     linked I mean related data in two spreadsheets can be joined with a shared
+     column.
+
+  2) Format and convert
+
+    PLACES_LEVEL_3=households.csv \
+    PEOPLE=people.csv \
+    RECORDS=seguimiento.csv \
+    make
+
+  3) Dry run of import with subset (one row) of data:
+
+    COUCH_URL=$CR_PROD \
+    PLACES_LEVEL_3_FIELDMAP=households-fieldmap.csv \
+    PLACES_LEVEL_3_PEOPLE_FIELDMAP=households-people-fieldmap.csv \
+    RECORDS_FIELDMAP=seguimiento-fieldmap.csv \
+    make import
+
+  4) Dry run using all of data, if this exits cleanly (doesn't throw) then data
+     integrity should be good:
+
+    COUCH_URL=$CR_PROD \
+    EXTRA_IMPORT_FLAGS='-d -w 0' \
+    EXTRA_IMPORT_FILTERS='cat' \
+    PLACES_LEVEL_3_FIELDMAP=households-fieldmap.csv \
+    PLACES_LEVEL_3_PEOPLE_FIELDMAP=households-people-fieldmap.csv \
+    RECORDS_FIELDMAP=seguimiento-fieldmap.csv \
+    make import > /dev/null
+  
+  5) Import for reals:
+
+    EXTRA_IMPORT_FLAGS='' \
+    EXTRA_IMPORT_FILTERS='cat' \
+    COUCH_URL=$CR_PROD \
+    make import
+
+  6) After import run a migration to link the contacts to the records properly:
+
+    cd migrations && \
+    COUCH_URL=$CR_PROD \
+    ./migrations run ./resolve-contacts-on-data-records
+
+
+Environment Variables
+
+  DIST_DIR 
+    Directory to save the formatted files ready for import.
+    Default: dist
+
+  PLACES_LEVEL_0
+    Example: mohs.csv
+
+  PLACES_LEVEL_0_DIST
+    Default: $DIST_DIR/places-level-0.csv
+
+  PLACES_LEVEL_1
+    Example: clusters.csv
+
+  PLACES_LEVEL_1_DIST
+    Default: $DIST_DIR/places-level-1.csv
+
+  PLACES_LEVEL_2
+    Example: zones.csv
+
+  PLACES_LEVEL_2_DIST
+    Default: $DIST_DIR/places-level-2.csv
+
+  PLACES_LEVEL_3
+    Example: concessions.csv
+
+  PLACES_LEVEL_3_DIST
+    Default: $DIST_DIR/places-level-3.csv
+
+  PLACES_LEVEL_3_FIELDMAP
+    Default: places-level-3-fieldmap.csv
+
+  PLACES_LEVEL_3_PEOPLE_FIELDMAP
+    Default: places-level-3-people-fieldmap.csv
+
+  PEOPLE
+    Example: people.csv
+
+  PEOPLE_DIST
+    Default: $DIST_DIR/people.csv
+
+  RECORDS
+    Example: records.csv
+
+  RECORDS_DIST
+    Example: $DIST_DIR/records.csv
+
+  RECORDS_FIELDMAP
+    Default: records-fieldmap.csv
+
+Other Examples:
+
+  Dry run using a special set of data you created in a directory called
+  `import-test-3`:
+
+    EXTRA_IMPORT_FILTERS='cat' \
+    DIST_DIR=import-test-3 \
+    COUCH_URL=$CR_PROD \
+    make import
+
