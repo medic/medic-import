@@ -26,6 +26,8 @@ Import Steps:
 
   3) Dry run of import with subset (one row) of data:
 
+    export CR_PROD=https://admin:secret@myproject.app.medicmobile.org
+
     COUCH_URL=$CR_PROD \
     PLACES_LEVEL_3_FIELDMAP=households-fieldmap.csv \
     PLACES_LEVEL_3_PEOPLE_FIELDMAP=households-people-fieldmap.csv \
