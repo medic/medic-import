@@ -1,4 +1,8 @@
 
+Note: This project is outdated but keeping it around in case it's useful.  For
+a recent and more flexible example of a project that imports patient records
+see `../import-records`.
+
 This example project assumes the users and contacts for the CHW's have been
 created.  See the other project templates for importing users and contacts.
 
