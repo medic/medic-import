@@ -62,6 +62,9 @@ $(DIST_DIR)/$(RECORDS_DIST): $(RECORDS) $(DIST_DIR)/$(PEOPLE_DIST)
 import: import-places-level-3 import-people import-records
 
 import-places-level-3:
+	###
+	### create places
+	###
 	cat $(DIST_DIR)/$(PLACES_LEVEL_3_DIST) | $(EXTRA_IMPORT_FILTERS) | medic-import \
 	  $(EXTRA_IMPORT_FLAGS) \
 	  -c `cat $(PLACES_LEVEL_3_FIELDMAP) | medic-csv-to-json | jq  -r  '[.[]|.source + ":" + .target] | join(",")'` \
