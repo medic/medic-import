@@ -299,9 +299,6 @@ Then edit `docs.json` and save it using the `_bulk_docs` API.
 
 ## Bulk edit data related to a user (via PouchDB)
 
-There is a tool likely better suited for this now, see 
-[PouchDB Dump CLI](https://github.com/pouchdb-community/pouchdb-dump-cli).
-
 You are logged in as a non-admin user via the app or a browser window and have
 synchronized all your data with the server.  Now you want a copy of that data
 to bulk edit.
@@ -356,6 +353,10 @@ cat console.json | \
 
 Do your edits, then updating the docs on the server will automatically sync
 with the app or browser window.
+
+See also:
+[PouchDB Dump CLI](https://github.com/pouchdb-community/pouchdb-dump-cli).
+
 
 ## Prune a large contact
 
