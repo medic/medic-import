@@ -13,6 +13,17 @@ The following command line tools are installed with this package:
  - [medic-extend-properties](docs/extend-properties.md)
  - [medic-export-mysql-query](docs/export-mysql-query.md)
 
+## Requirements 
+
+The minimal requirements to run these tools and example projects are
+[NodeJS](https://nodejs.org) and GNU Make.  Almost every Unix based system on
+the planet has a `make` binary preinstalled, typing `make -v` in your terminal
+should provide version information and confirms it's installed.
+
+On OSX, GNU Make is bundled with the Xcode Command Line Tools, run
+`xcode-select --install` from the terminal and choose Install if you only want
+the command line tools installed and not the full Xcode package. 
+
 # Getting Started
 
 A new project typically begins with a spreadsheet of raw data that you want to
