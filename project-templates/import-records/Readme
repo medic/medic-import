@@ -7,10 +7,6 @@ Requirements
 Make does not support filenames with special characters unfortunately.  Remove
 special characters in your filenames.
 
-Make is not included on OSX by default, you need to install XCode or use a
-package manager like [Brew](https://brew.sh/) or
-[Nix](https://nixos.org/nix/).
-
 Import Steps:
 
   1) Gather source data, export from a database into linked spreadsheets.  By
