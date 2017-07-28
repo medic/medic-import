@@ -5,13 +5,24 @@ help manage large amounts of Medic Mobile data.
 
 The following command line tools are installed with this package:
 
- - [medic-stats](docs/stats.md)
+ - medic-stats
  - [medic-import](docs/import.md)
  - [medic-format-csv](docs/format-csv.md)
- - [medic-csv-to-json](docs/csv-to-json.md)
- - [medic-update-embedded](docs/update-embedded.md)
+ - medic-csv-to-json
+ - medic-update-embedded
  - [medic-extend-properties](docs/extend-properties.md)
  - [medic-export-mysql-query](docs/export-mysql-query.md)
+
+## Requirements 
+
+The minimal requirements to run these tools and example projects are
+[NodeJS](https://nodejs.org) and GNU Make.  Almost every Unix based system on
+the planet has a `make` binary preinstalled, typing `make -v` in your terminal
+should provide version information and confirms it's installed.
+
+On OSX, GNU Make is bundled with the Xcode Command Line Tools, run
+`xcode-select --install` from the terminal and choose Install if you only want
+the command line tools installed and not the full Xcode package. 
 
 # Getting Started
 
@@ -49,7 +60,8 @@ example.
   - [Import users](project-templates/import-users)
   - [Import users with related data](project-templates/import-users-w-supervisors)
   - [Import contacts (places and people)](project-templates/import-contacts)
-  - [Import pregnancies](project-templates/import-pregnancies)
+  - [Import records](project-templates/import-records)
+  - [Migrations](project-templates/migrations)
 
 Example:
 

@@ -22,6 +22,7 @@ Description:
       places-level-2
       places-level-3
       places-update
+      records
 
   The column names in your source data are mapped directly to property names on
   the JSON POST body or can be mapped to different strings with the `-c`

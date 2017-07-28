@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Consume ndjson input and bulk save changes to the database, default to
+# batches of 100 records.  Write results as ndjson to stdout.
+#
+
+set -e
+set -o pipefail
+
+if [ ! -z "$DEBUG" ]; then
+  set -x
+fi
+
+source ./env
+
+BATCH=${MIGRATION_BATCH-100}
+
+if [ -z "$COUCH_URL" ]; then
+  echo "Define COUCH_URL" 1>&2
+  exit 1
+fi
+
+./node_modules/.bin/5984 batch -n "$BATCH" | \
+./node_modules/.bin/5984 fetch-revs "$COUCH_URL/$MIGRATION_DB" | \
+./node_modules/.bin/5984 batch -n "$BATCH" | \
+./node_modules/.bin/5984 bulk "$COUCH_URL/$MIGRATION_DB"

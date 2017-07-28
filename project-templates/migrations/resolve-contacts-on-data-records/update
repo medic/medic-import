@@ -1,0 +1,158 @@
+#!/usr/bin/env node
+
+/*
+ * Processes view data using a batch size and outputs bulk update results on
+ * stdout.
+ */
+
+require('dotenv').config({path: `${__dirname}/env`});
+
+const url = require('url');
+
+const DB = process.env.MIGRATION_DB,
+      NAME = process.env.MIGRATION_NAME,
+      BATCH_SIZE = 100,
+      MAX_RECURSION = 100;
+
+var stats = {
+      docs_updated: 0
+    },
+    count = 0;
+
+process.on('exit', function() {
+  console.error(stats);
+});
+
+process.on('SIGINT', function() {
+  process.exit();
+});
+
+try {
+  var options = url.parse(process.env.COUCH_URL);
+} catch(e) {
+  console.error("Failed to parse COUCH_URL.");
+  throw e;
+}
+
+if (options.protocol === 'https:') {
+  var http = require('https');
+} else if (options.protocol === 'http:') {
+  var http = require('http');
+  console.warn('using unencrypted protocol: http');
+} else {
+  throw new Error(`Protocol not supported: ${options.protocol}`);
+}
+
+// null is not an object
+var isObject = function (obj) {
+  return Boolean(obj && typeof obj === 'object');
+};
+
+var getPlaceLevel2Contact = function(doc) {
+  if (doc.type === 'health_center' && doc.contact) {
+    return doc.contact;
+  } else if (doc.parent) {
+    return getPlaceLevel2Contact(doc.parent);
+  };
+  return null;
+};
+
+var processData = function(input) {
+  // prepare for bulk update
+  var data = typeof input  === 'string' ? JSON.parse(input ) : input,
+      ret = {docs: []};
+  if (data.docs) {
+    data = data.docs;
+  } else if (data.rows) {
+    data = data.rows;
+  } else if (!Array.isArray(data)) {
+    data = [data];
+  }
+  data.forEach(function(row) {
+    var doc = row.doc ? row.doc : row;
+    // skip null values
+    if (!isObject(doc)) {
+      return;
+    }
+    if (doc.type === 'data_record') {
+      ret.docs.push(doc);
+    } else {
+      ret.docs.forEach(function(record) {
+        if (record.contact === doc._id) {
+          stats.docs_updated++;
+          record.contact = getPlaceLevel2Contact(doc); // get CHW contact
+          if (!record.contact) {
+            throw new Error(`Missing place level 2 contact on ${doc._id}.`);
+          }
+          record.fields.inputs.contact = doc;
+          record.from = record.contact.phone;
+        }
+      });
+    }
+  });
+  return ret;
+};
+
+var bulkUpdate = function(body, callback) {
+  var options = url.parse(process.env.COUCH_URL);
+  options.method = 'POST';
+  options.headers = {'content-type': 'application/json'};
+  options.path = `/${DB}/_bulk_docs`;
+  var req = http.request(options, function(res) {
+    if (res.statusCode == 404) {
+      return callback(
+        new Error(`${res.statusCode} ${res.statusMessage}: ${res.req.path}`)
+      );
+    }
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      console.log(chunk);
+    });
+    res.on('end', callback);
+    res.on('error', callback);
+  });
+  req.on('error', callback);
+  req.write(JSON.stringify(body));
+  req.end();
+};
+
+var processViewData = function(callback) {
+  var options = url.parse(process.env.COUCH_URL);
+  options.path += `/${DB}/_design/${NAME}/_view/${NAME}`;
+  options.path += `?limit=${BATCH_SIZE}&include_docs=true`;
+  var req = http.request(options, function(res) {
+    if (res.statusCode == 404) {
+      return callback(
+        new Error(`${res.statusCode} ${res.statusMessage}: ${res.req.path}`)
+      );
+    }
+    var resBody = '';
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      resBody += chunk;
+    });
+    res.on('end', function() {
+      var body = JSON.parse(resBody);
+      if (body.total_rows === 0) {
+        console.error('done processing view results');
+        return callback();
+      }
+      bulkUpdate(processData(body), function(e) {
+        if (e) return callback(e);
+        count++;
+        if (count < MAX_RECURSION) {
+          processViewData(callback);
+        } else {
+          return callback(new Error('Reaching maximum recursion limit.'));
+        }
+      });
+    });
+    res.on('error', callback);
+  });
+  req.on('error', callback);
+  req.end();
+};
+
+processViewData(function(err) {
+  if (err) throw err;
+});

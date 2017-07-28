@@ -1,0 +1,16 @@
+{
+  "name": "resolve-contacts-on-data-records",
+  "version": "1.0.0",
+  "description": "",
+  "main": "design-doc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "5984": "^1.0.0",
+    "dotenv": "^4.0.0"
+  }
+}

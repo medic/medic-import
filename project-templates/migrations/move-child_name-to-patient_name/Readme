@@ -1,0 +1,82 @@
+
+Make Targets
+
+  Build ddoc and install node dependencies (default):
+
+    make 
+
+  Build and install ddoc:
+
+    make install
+
+  Uninstall ddoc:
+
+    make uninstall
+
+  Uninstall ddoc and file (reset):
+
+    make clean
+
+  Run the migration
+
+    ./run
+
+Environment Variables:
+
+  COUCH_URL   The server URL to run against.
+
+Examples:
+
+  COUCH_URL=http://admin:secret@localhost:5984 \
+  make install
+
+  COUCH_URL=http://admin:secret@localhost:5984 \
+  ./run | tee -a results.ndjson
+
+Files descriptions:
+
+  env
+
+    Defines environment variables that are shared.
+
+  ddoc/{index.js, map.js}
+
+    Design doc source files, these are compiled to ddoc.json.  The query here
+    is dependent on a custom design doc.  This allows us to identify and
+    process the bad data until the database returns no results.
+    
+  query
+
+    Query database and stream ndjson to stdout. 
+    
+    Example:
+
+      curl http://localhost:5984/medic/_all_docs?include_docs=true
+      
+  filter
+
+    Filters ndjson on stdin and writes ndjson to stdout.  Does not modify
+    lines, only decides which lines are included in output.
+
+    Example:
+
+      jsonfilter 'rows.*.doc'
+
+  transform, transform.js
+
+    Modifies ndjson and writes ndjson to stdout.
+
+    Example:
+
+      jsonmap --file=transform.js
+
+  update
+
+    Consume ndjson input and bulk save changes to the database, default to
+    batches of 100 records.  Write results as ndjson to stdout.
+
+  run 
+
+    Chain ndjson formatted data together on stdin and stdout to run a data
+    migration.
+

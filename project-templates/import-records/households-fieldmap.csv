@@ -1,0 +1,6 @@
+source,target
+uuid,uuid
+family_name,name
+community_uuid,parent
+geolocation,geolocation
+reported_date,reported_date

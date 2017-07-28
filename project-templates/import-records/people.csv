@@ -1,0 +1,6 @@
+household_id,person_id,name,sex,exact_dob_known,date_of_birth,phone,occupation,civil_status,years_in_school,has_children,live_with_children,num_pregnancies,all_children_living,num_children_living,num_children_dead,dead_children_info,diabetes_diagnosis,pregnancy_info_type,pregnancy_info_number,mother_prenatal_care,pregnancy_length_months,birth_weight_pounds,birth_weight_ounces,birth_height_cm,has_older_sibling,older_sibling_dob,has_chronic_illness_or_disability,chronic_illness_or_disability,chronic_illness_or_disability_other,chronic_illness_or_disability_final,status,death_year,currently_receiving_supplement,notes,reported_date,type
+6455,3821129,Irving Francisco Batista Monte,male,exact dob,2/14/2012,,,,,,,,,,,,,normal,one,yes,9,10,0,,yes,4/13/2008,no,,,,1,,no,,4/9/2012,person
+6455,8720017,Isodor Rene Batista Monte,male,exact dob,5/17/2014,,,,,,,,,,,,,normal,one,yes,9,8,0,,yes,1/12/2013,no,,,,1,,no,,6/2/2014,person
+6455,9387234,Maria Paula Batista Monte,female,exact dob,3/2/2016,,,,,,,,,,,,,normal,one,yes,9,6,0,,yes,11/24/2013,no,,,,1,,no,,6/6/2016,person
+8471,3820291,Julia Maria Mendoza Coelho,female,exact dob,7/12/2012,,,,,,,,,,,,,normal,one,yes,9,7,0,,yes,7/21/2010,no,,,,1,,no,,8/6/2012,person
+8471,8734216,Dominica Suzana Mendoza Coelho,female,exact dob,9/11/2015,,,,,,,,,,,,,normal,one,yes,9,7,0,,yes,10/8/2013,no,,,,1,,no,,12/2/2015,person
