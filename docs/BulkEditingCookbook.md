@@ -45,6 +45,7 @@ Install [jq](https://stedolan.github.io/jq/) and
 
 Get familiar with [Bulk Docs API](http://docs.couchdb.org/en/2.0.0/api/database/bulk-api.html).
 
+JQ also has a [great manual](https://stedolan.github.io/jq/manual/) and [Cookbook](https://github.com/stedolan/jq/wiki/Cookbook) too.
 
 # Recipes
 
