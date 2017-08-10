@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# Medic Webapp Bulk Delete Using Shell Utils
+#
+# Requirements:
+#
+#   curl
+#   jq
+#
+# High batch values (>500) only work direct to CouchDB, not through medic-api.
+# If you have a large amount of data to delet you can create a secure
+# connection the CouchDB port with ssh like:
+#
+#   ssh -L8000:localhost:5984 vm@myproject.app.medicmobile.org
+#
+
+set -e
+set -o pipefail
+
+if [ ! -z "$DEBUG" ]; then
+  set -x
+fi
+
+if [ -z "$COUCH_URL" ]; then
+  echo "Define COUCH_URL" 1>&2
+  exit 1
+fi
+
+BATCH=1000
+CURL='curl -H content-type:application/json --compressed'
+QUERY='/medic/_design/medic-client/_view/doc_by_type'
+QUERY_ARGS="include_docs=true&limit=$BATCH"
+
+deleteDocType () {
+# delete-list is new line delimited list of doc IDs
+  local type="$1"
+  $CURL -sS -d@- --fail "$COUCH_URL$QUERY?$QUERY_ARGS" | \
+  jq '{docs: [ .rows[] | select(.doc).doc | ._deleted = true ]}' | \
+  $CURL -d@- $COUCH_URL/medic/_bulk_docs >> results.json
+}
