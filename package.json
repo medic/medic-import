@@ -1,6 +1,6 @@
 {
   "name": "medic-bulk-utils",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Command line tools and documentation to help manage large amounts of Medic Mobile data.",
   "homepage": "https://github.com/medic/medic-bulk-utils",
   "repository": "https://github.com/medic/medic-bulk-utils",
