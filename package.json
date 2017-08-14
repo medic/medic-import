@@ -16,8 +16,7 @@
     "medic-csv-to-json": "./csv-to-json",
     "medic-extend-properties": "./extend-properties",
     "medic-update-embedded": "./update-embedded",
-    "medic-stats": "./stats",
-    "medic-migrations": "./migrations"
+    "medic-stats": "./stats"
   },
   "dependencies": {
     "fast-csv": "^2.1.0",
