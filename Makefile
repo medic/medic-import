@@ -8,7 +8,7 @@ DOCS = docs/format-csv.md \
 .PHONY: docs/BulkEditingCookbook.md
 
 all: docs
-	
+
 docs: $(DOCS)
 
 docs/format-csv.md: format-csv
@@ -27,6 +27,12 @@ docs/extend-properties.md: extend-properties
 
 docs/BulkEditingCookbook.md:
 	./node_modules/.bin/doctoc --maxlevel 2 docs/BulkEditingCookbook.md
+
+publish:
+	read -a confirm -p "Clean out working files and publish? (y/n) " && \
+	test "$$confirm" == "y" && \
+	git clean -fd && \
+	npm publish
 
 cleandocs:
 	rm $(DOCS)
