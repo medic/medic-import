@@ -1,3 +1,5 @@
+**Please note that this repo is no longer supported — consider using [medic-conf](https://github.com/medic/medic-conf) instead.**
+
 # Overview
 
 Medic Bulk Utils is a set of command line tools and [documentation](./docs/) to
